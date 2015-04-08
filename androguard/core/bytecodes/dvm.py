@@ -8544,6 +8544,7 @@ class DalvikVMFormat(bytecode._Bytecode):
                 l.append(j)
         return l
 
+
     def get_len_methods(self):
         """
           Return the number of methods

@@ -1121,6 +1121,7 @@ class TaintedPackages(object):
         classes = self.__vm.get_classes_names()
         l = []
         for (m, _) in self.get_packages():
+
             paths = m.get_methods()
             for j in paths:
                 if j.get_access_flag() == TAINTED_PACKAGE_CALL:
@@ -1678,6 +1679,7 @@ class MethodAnalysis(object):
         instructions = [i for i in bc.get_instructions()]
 
         for i in instructions:
+
             for j in BO['BasicOPCODES_H']:
                 if j.match(i.get_name()) != None:
                     v = BO['Dnext'](i, idx, self.method)
@@ -1872,6 +1874,7 @@ class VMAnalysis(object):
         self.methods = []
         self.hmethods = {}
         self.__nmethods = {}
+
         for i in self.__vm.get_methods():
             x = MethodAnalysis(self.__vm, i, self)
             self.methods.append(x)
