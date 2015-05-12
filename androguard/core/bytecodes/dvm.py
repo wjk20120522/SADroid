@@ -1615,30 +1615,29 @@ class EncodedValue(object):
 
         #  TODO: parse floats/doubles correctly
 
-        if self.value_type >= VALUE_SHORT and self.value_type \
-            < VALUE_STRING:
+        if   VALUE_SHORT <= self.value_type < VALUE_STRING:
             (self.value, self.raw_value) = \
                 self._getintvalue(buff.read(self.value_arg + 1))
         elif self.value_type == VALUE_STRING:
-            (id, self.raw_value) = \
+            (idx, self.raw_value) = \
                 self._getintvalue(buff.read(self.value_arg + 1))
-            self.value = cm.get_raw_string(id)
+            self.value = cm.get_raw_string(idx)
         elif self.value_type == VALUE_TYPE:
-            (id, self.raw_value) = \
+            (idx, self.raw_value) = \
                 self._getintvalue(buff.read(self.value_arg + 1))
-            self.value = cm.get_type(id)
+            self.value = cm.get_type(idx)
         elif self.value_type == VALUE_FIELD:
-            (id, self.raw_value) = \
+            (idx, self.raw_value) = \
                 self._getintvalue(buff.read(self.value_arg + 1))
-            self.value = cm.get_field(id)
+            self.value = cm.get_field(idx)
         elif self.value_type == VALUE_METHOD:
-            (id, self.raw_value) = \
+            (idx, self.raw_value) = \
                 self._getintvalue(buff.read(self.value_arg + 1))
-            self.value = cm.get_method(id)
+            self.value = cm.get_method(idx)
         elif self.value_type == VALUE_ENUM:
-            (id, self.raw_value) = \
+            (idx, self.raw_value) = \
                 self._getintvalue(buff.read(self.value_arg + 1))
-            self.value = cm.get_field(id)
+            self.value = cm.get_field(idx)
         elif self.value_type == VALUE_ARRAY:
             self.value = EncodedArray(buff, cm)
         elif self.value_type == VALUE_ANNOTATION:
@@ -1671,7 +1670,8 @@ class EncodedValue(object):
     def get_value_arg(self):
         return self.value_arg
 
-    def _getintvalue(self, buf):
+    @staticmethod
+    def _getintvalue(buf):
         ret = 0
         shift = 0
         for b in buf:
@@ -2252,8 +2252,7 @@ class ProtoIdItem(object):
 
     def reload(self):
         self.shorty_idx_value = self.__CM.get_string(self.shorty_idx)
-        self.return_type_idx_value = \
-            self.__CM.get_type(self.return_type_idx)
+        self.return_type_idx_value = self.__CM.get_type(self.return_type_idx)
         params = self.__CM.get_type_list(self.parameters_off)
         self.parameters_off_value = '({})'.format(' '.join(params))
 
@@ -2348,16 +2347,9 @@ class ProtoHIdItem(object):
         :type cm: :class:`ClassManager`
     """
 
-    def __init__(
-        self,
-        size,
-        buff,
-        cm,
-        ):
+    def __init__(self, size, buff, cm):
         self.__CM = cm
-
         self.offset = buff.get_idx()
-
         self.proto = []
 
         for i in xrange(0, size):
@@ -2523,12 +2515,7 @@ class FieldHIdItem(object):
         :type cm: :class:`ClassManager`
     """
 
-    def __init__(
-        self,
-        size,
-        buff,
-        cm,
-        ):
+    def __init__(self, size, buff, cm):
         self.offset = buff.get_idx()
 
         self.elem = []
@@ -2716,14 +2703,8 @@ class MethodHIdItem(object):
         :type cm: :class:`ClassManager`
     """
 
-    def __init__(
-        self,
-        size,
-        buff,
-        cm,
-        ):
+    def __init__(self, size, buff, cm):
         self.__CM = cm
-
         self.offset = buff.get_idx()
 
         self.methods = []
@@ -2943,7 +2924,7 @@ class EncodedField(object):
             :rtype: string
         """
 
-        if self.access_flags_string == None:
+        if self.access_flags_string is None:
             self.access_flags_string = \
                 get_access_flags_string(self.get_access_flags())
 
@@ -2956,7 +2937,8 @@ class EncodedField(object):
         self.CM.set_hook_field_name(self, value)
         self.reload()
 
-    def get_obj(self):
+    @staticmethod
+    def get_obj():
         return []
 
     def get_raw(self):
@@ -2987,7 +2969,7 @@ class EncodedField(object):
                                self.get_access_flags_string()))
 
         init_value = self.get_init_value()
-        if init_value != None:
+        if init_value is not None:
             bytecode._PrintDefault('\tinit value: %s\n'
                                    % str(init_value.get_value()))
 
@@ -3086,7 +3068,7 @@ class EncodedMethod(object):
             :rtype: string
         """
 
-        if self.access_flags_string == None:
+        if self.access_flags_string is None:
             self.access_flags_string = \
                 get_access_flags_string(self.get_access_flags())
 
@@ -3116,8 +3098,8 @@ class EncodedMethod(object):
             nb = self.code.get_registers_size()
             proto = self.get_descriptor()
 
-            ret = proto.split(')')
-            params = (ret[0])[1:].split()
+            # ret = proto.split(')')
+            # params = (ret[0])[1:].split()
 
             ret = proto.split(')')
             params = (ret[0])[1:].split()
@@ -3134,7 +3116,8 @@ class EncodedMethod(object):
             info['return'] = get_type(ret[1])
         return info
 
-    def each_params_by_register(self, nb, proto):
+    @staticmethod
+    def each_params_by_register(nb, proto):
         bytecode._PrintSubBanner('Params')
 
         ret = proto.split(')')
@@ -3396,7 +3379,6 @@ class ClassDataItem(object):
 
     def __init__(self, buff, cm):
         self.__CM = cm
-
         self.offset = buff.get_idx()
 
         self.static_fields_size = readuleb128(buff)
@@ -3409,17 +3391,10 @@ class ClassDataItem(object):
         self.direct_methods = []
         self.virtual_methods = []
 
-        self._load_elements(self.static_fields_size,
-                            self.static_fields, EncodedField, buff, cm)
-        self._load_elements(self.instance_fields_size,
-                            self.instance_fields, EncodedField, buff,
-                            cm)
-        self._load_elements(self.direct_methods_size,
-                            self.direct_methods, EncodedMethod, buff,
-                            cm)
-        self._load_elements(self.virtual_methods_size,
-                            self.virtual_methods, EncodedMethod, buff,
-                            cm)
+        self._load_elements(self.static_fields_size, self.static_fields, EncodedField, buff, cm)
+        self._load_elements(self.instance_fields_size, self.instance_fields, EncodedField, buff, cm)
+        self._load_elements(self.direct_methods_size, self.direct_methods, EncodedMethod, buff, cm)
+        self._load_elements(self.virtual_methods_size, self.virtual_methods, EncodedMethod, buff, cm)
 
     def get_static_fields_size(self):
         """
@@ -3517,20 +3492,14 @@ class ClassDataItem(object):
         self.offset = off
 
     def set_static_fields(self, value):
-        if value != None:
+        if value is not None:
             values = value.get_values()
             if len(values) <= len(self.static_fields):
                 for i in xrange(0, len(values)):
                     self.static_fields[i].set_init_value(values[i])
 
-    def _load_elements(
-        self,
-        size,
-        l,
-        Type,
-        buff,
-        cm,
-        ):
+    @staticmethod
+    def _load_elements(size, l, Type, buff, cm):
         prev = 0
         for i in xrange(0, size):
             el = Type(buff, cm)
@@ -3540,7 +3509,6 @@ class ClassDataItem(object):
                 prev = el.get_field_idx()
             else:
                 prev = el.get_method_idx()
-
             l.append(el)
 
     def reload(self):
@@ -3662,36 +3630,30 @@ class ClassDefItem(object):
         self.interfaces = self.__CM.get_type_list(self.interfaces_off)
 
         if self.class_data_off != 0:
-            self.class_data_item = \
-                self.__CM.get_class_data_item(self.class_data_off)
+            self.class_data_item = self.__CM.get_class_data_item(self.class_data_off)
             self.class_data_item.reload()
 
         if self.static_values_off != 0:
-            self.static_values = \
-                self.__CM.get_encoded_array_item(self.static_values_off)
+            self.static_values = self.__CM.get_encoded_array_item(self.static_values_off)
 
-            if self.class_data_item != None:
+            if self.class_data_item is not None:
                 self.class_data_item.set_static_fields(self.static_values.get_value())
 
     def get_methods(self):
         """
             Return all methods of this class
-
             :rtype: a list of :class:`EncodedMethod` objects
         """
-
-        if self.class_data_item != None:
+        if self.class_data_item is not None:
             return self.class_data_item.get_methods()
         return []
 
     def get_fields(self):
         """
             Return all fields of this class
-
             :rtype: a list of :class:`EncodedField` objects
         """
-
-        if self.class_data_item != None:
+        if self.class_data_item is not None:
             return self.class_data_item.get_fields()
         return []
 
@@ -3913,26 +3875,15 @@ class ClassHDefItem(object):
         :type cm: :class:`ClassManager`
     """
 
-    def __init__(
-        self,
-        size,
-        buff,
-        cm,
-        ):
+    def __init__(self, size, buff, cm):
         self.__CM = cm
-
         self.offset = buff.get_idx()
 
         self.class_def = []
 
         for i in xrange(0, size):
-            idx = buff.get_idx()
-
             class_def = ClassDefItem(buff, cm)
             self.class_def.append(class_def)
-
-            # it may not be needed
-            # buff.set_idx( idx + calcsize("=IIIIIIII") )
 
     def set_off(self, off):
         self.offset = off
@@ -7466,12 +7417,12 @@ class MapItem(object):
         self.next(buff, cm)
 
     def next(self, buff, cm):
-        if TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_ID_ITEM':
+        if TYPE_MAP_ITEM[self.type] == 'TYPE_HEADER_ITEM':
+            self.item = HeaderItem(buff, cm)
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_ID_ITEM':
             self.item = [StringIdItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_ID_ITEM':
             self.item = TypeHIdItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CODE_ITEM':
-            self.item = CodeItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_PROTO_ID_ITEM':
             self.item = ProtoHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_FIELD_ID_ITEM':
@@ -7480,10 +7431,13 @@ class MapItem(object):
             self.item = MethodHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DEF_ITEM':
             self.item = ClassHDefItem(self.size, buff, cm)
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CODE_ITEM':
+            self.item = CodeItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DATA_ITEM':
             self.item = [ClassDataItem(buff, cm) for i in xrange(0, self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_HEADER_ITEM':
-            self.item = HeaderItem(buff, cm)    # may not be invoked
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_ENCODED_ARRAY_ITEM':
+            self.item = [EncodedArrayItem(buff, cm) for i in xrange(0, self.size)]
+
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_ANNOTATION_ITEM':
             self.item = [AnnotationItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_ANNOTATION_SET_ITEM':
@@ -7498,8 +7452,6 @@ class MapItem(object):
             self.item = [StringDataItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_DEBUG_INFO_ITEM':
             self.item = DebugInfoItemEmpty(buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_ENCODED_ARRAY_ITEM':
-            self.item = [EncodedArrayItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_MAP_LIST':
             pass  # It's me I think !!!
         else:
@@ -7657,12 +7609,7 @@ class ClassManager(object):
     def get_all_engine(self):
         return self.engine
 
-    def add_type_item(
-        self,
-        type_item,
-        c_item,
-        item,
-        ):
+    def add_type_item(self, type_item, c_item, item):
         self.__manage_item[type_item] = item
 
         self.__obj_offset[c_item.get_off()] = c_item
@@ -7672,7 +7619,7 @@ class ClassManager(object):
         if type_item == 'TYPE_STRING_DATA_ITEM':
             sdi = True
 
-        if item != None:
+        if item is not None:
             if isinstance(item, list):
                 for i in item:
                     goff = i.offset
@@ -7680,7 +7627,7 @@ class ClassManager(object):
 
                     self.__obj_offset[i.get_off()] = i
 
-                    if sdi == True:
+                    if sdi is True:
                         self.__strings_off[goff] = i
             else:
                 self.__manage_item_off.append(c_item.get_offset())
@@ -7703,7 +7650,7 @@ class ClassManager(object):
             if i.get_off() == off:
                 return i
 
-    def get_string(self, idx):
+    def get_string(self, idx):  #id is index
         if idx in self.hook_strings:
             return self.hook_strings[idx]
 
@@ -7748,7 +7695,7 @@ class ClassManager(object):
             if i.get_type_list_off() == off:
                 return [type_.get_string() for type_ in i.get_list()]
 
-    def get_type(self, idx):
+    def get_type(self, idx):    #idx is index
         _type = self.__manage_item['TYPE_TYPE_ID_ITEM'].get(idx)
         if _type == -1:
             return 'AG:ITI: invalid type'
