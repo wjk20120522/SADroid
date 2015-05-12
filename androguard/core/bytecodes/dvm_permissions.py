@@ -29,10 +29,10 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # MESSAGES
                                              # BOOKMARKS
                                              # DEVICE_ALARMS
                                              # VOICEMAIL
+                                             # ACCESSIBILITY_FEATURES (new added)
                                              # LOCATION
                                              # NETWORK
                                              # BLUETOOTH_NETWORK
-                                             # SYSTEM TOOLS
                                              # ACCOUNTS
                                              # AFFECTS_BATTERY
                                              # AUDIO_SETTINGS
@@ -48,6 +48,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # MESSAGES
                                              # SYSTEM_CLOCK
                                              # STATUS_BAR
                                              # SYNC_SETTINGS
+                                             # SYSTEM TOOLS
                                              # DEVELOPMENT_TOOLS
                                              # No groups ...
     'SEND_SMS': ['dangerous', 'send SMS messages',

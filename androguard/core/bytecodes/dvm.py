@@ -442,14 +442,8 @@ class HeaderItem(object):
         :type cm: :class:`ClassManager`
     """
 
-    def __init__(
-        self,
-        vm,
-        buff,
-        cm,
-        ):
+    def __init__(self, buff, cm):
         self.__CM = cm
-
         self.offset = buff.get_idx()
 
         self.magic = unpack('=Q', buff.read(8))[0]
@@ -488,35 +482,35 @@ class HeaderItem(object):
         pass
 
     def get_obj(self):
-        if self.map_off_obj == None:
+        if self.map_off_obj is None:
             self.map_off_obj = \
                 self.__CM.get_item_by_offset(self.map_off)
 
-        if self.string_off_obj == None:
+        if self.string_off_obj is None:
             self.string_off_obj = \
                 self.__CM.get_item_by_offset(self.string_ids_off)
 
-        if self.type_off_obj == None:
+        if self.type_off_obj is None:
             self.type_off_obj = \
                 self.__CM.get_item_by_offset(self.type_ids_off)
 
-        if self.proto_off_obj == None:
+        if self.proto_off_obj is None:
             self.proto_off_obj = \
                 self.__CM.get_item_by_offset(self.proto_ids_off)
 
-        if self.field_off_obj == None:
+        if self.field_off_obj is None:
             self.field_off_obj = \
                 self.__CM.get_item_by_offset(self.field_ids_off)
 
-        if self.method_off_obj == None:
+        if self.method_off_obj is None:
             self.method_off_obj = \
                 self.__CM.get_item_by_offset(self.method_ids_off)
 
-        if self.class_off_obj == None:
+        if self.class_off_obj is None:
             self.class_off_obj = \
                 self.__CM.get_item_by_offset(self.class_defs_off)
 
-        if self.data_off_obj == None:
+        if self.data_off_obj is None:
             self.data_off_obj = \
                 self.__CM.get_item_by_offset(self.data_off)
 
@@ -2094,10 +2088,8 @@ class StringIdItem(object):
     def get_string_data_off(self):
         """
             Return the offset from the start of the file to the string data for this item
-
             :rtype: int
         """
-
         return self.string_data_off
 
     def set_off(self, off):
@@ -2116,9 +2108,7 @@ class StringIdItem(object):
 
     def get_obj(self):
         if self.string_data_off != 0:
-            self.string_data_off = \
-                self.__CM.get_string_by_offset(self.string_data_off).get_off()
-
+            self.string_data_off = self.__CM.get_string_by_offset(self.string_data_off).get_off()
         return pack('=I', self.string_data_off)
 
     def get_raw(self):
@@ -2127,12 +2117,10 @@ class StringIdItem(object):
     def get_length(self):
         return len(self.get_obj())
 
-
 class TypeIdItem(object):
 
     """
         This class can parse a type_id_item of a dex file
-
         :param buff: a string which represents a Buff object of the type_id_item
         :type buff: Buff object
         :param cm: a ClassManager object
@@ -2142,31 +2130,25 @@ class TypeIdItem(object):
     def __init__(self, buff, cm):
         self.__CM = cm
         self.offset = buff.get_idx()
-
         self.descriptor_idx = unpack('=I', buff.read(4))[0]
         self.descriptor_idx_value = None
 
     def get_descriptor_idx(self):
         """
             Return the index into the string_ids list for the descriptor string of this type
-
             :rtype: int
         """
-
         return self.descriptor_idx
 
     def get_descriptor_idx_value(self):
         """
           Return the string associated to the descriptor
-
           :rtype: string
       """
-
         return self.descriptor_idx_value
 
     def reload(self):
-        self.descriptor_idx_value = \
-            self.__CM.get_string(self.descriptor_idx)
+        self.descriptor_idx_value = self.__CM.get_string(self.descriptor_idx)
 
     def show(self):
         bytecode._PrintSubBanner('Type Id Item')
@@ -2195,14 +2177,8 @@ class TypeHIdItem(object):
         :type cm: :class:`ClassManager`
     """
 
-    def __init__(
-        self,
-        size,
-        buff,
-        cm,
-        ):
+    def __init__(self, size, buff, cm):
         self.__CM = cm
-
         self.offset = buff.get_idx()
 
         self.type = []
@@ -2212,7 +2188,6 @@ class TypeHIdItem(object):
     def get_type(self):
         """
           Return the list of type_id_item
-
           :rtype: a list of :class:`TypeIdItem` objects
       """
 
@@ -7488,146 +7463,50 @@ class MapItem(object):
 
         buff.set_idx(self.offset)
 
-        lazy_analysis = self.__CM.get_lazy_analysis()
-
-        if lazy_analysis:
-            self.next_lazy(buff, cm)
-        else:
-            self.next(buff, cm)
-
-    def get_off(self):
-        return self.off
-
-    def get_offset(self):
-        return self.offset
-
-    def get_type(self):
-        return self.type
-
-    def get_size(self):
-        return self.size
+        self.next(buff, cm)
 
     def next(self, buff, cm):
-        debug('%s @ 0x%x(%d) %x %x' % (TYPE_MAP_ITEM[self.type],
-              buff.get_idx(), buff.get_idx(), self.size, self.offset))
-
         if TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_ID_ITEM':
-            self.item = [StringIdItem(buff, cm) for i in xrange(0,
-                         self.size)]
+            self.item = [StringIdItem(buff, cm) for i in xrange(0, self.size)]
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_ID_ITEM':
+            self.item = TypeHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_CODE_ITEM':
             self.item = CodeItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_ID_ITEM':
-
-            self.item = TypeHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_PROTO_ID_ITEM':
-
             self.item = ProtoHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_FIELD_ID_ITEM':
-
             self.item = FieldHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_METHOD_ID_ITEM':
-
             self.item = MethodHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DEF_ITEM':
-
             self.item = ClassHDefItem(self.size, buff, cm)
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DATA_ITEM':
+            self.item = [ClassDataItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_HEADER_ITEM':
-
-            self.item = HeaderItem(self.size, buff, cm)
+            self.item = HeaderItem(buff, cm)    # may not be invoked
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_ANNOTATION_ITEM':
-
-            self.item = [AnnotationItem(buff, cm) for i in xrange(0,
-                         self.size)]
+            self.item = [AnnotationItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_ANNOTATION_SET_ITEM':
-
-            self.item = [AnnotationSetItem(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] \
-            == 'TYPE_ANNOTATIONS_DIRECTORY_ITEM':
-
-            self.item = [AnnotationsDirectoryItem(buff, cm) for i in
-                         xrange(0, self.size)]
+            self.item = [AnnotationSetItem(buff, cm) for i in xrange(0, self.size)]
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_ANNOTATIONS_DIRECTORY_ITEM':
+            self.item = [AnnotationsDirectoryItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_ANNOTATION_SET_REF_LIST':
-
-            self.item = [AnnotationSetRefList(buff, cm) for i in
-                         xrange(0, self.size)]
+            self.item = [AnnotationSetRefList(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_LIST':
-
-            self.item = [TypeList(buff, cm) for i in xrange(0,
-                         self.size)]
+            self.item = [TypeList(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_DATA_ITEM':
-
-            self.item = [StringDataItem(buff, cm) for i in xrange(0,
-                         self.size)]
+            self.item = [StringDataItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_DEBUG_INFO_ITEM':
-
             self.item = DebugInfoItemEmpty(buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_ENCODED_ARRAY_ITEM':
-
-            self.item = [EncodedArrayItem(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DATA_ITEM':
-
-            self.item = [ClassDataItem(buff, cm) for i in xrange(0,
-                         self.size)]
+            self.item = [EncodedArrayItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_MAP_LIST':
-
             pass  # It's me I think !!!
         else:
-
-            bytecode.Exit('Map item %d @ 0x%x(%d) is unknown'
-                          % (self.type, buff.get_idx(), buff.get_idx()))
-
-    def next_lazy(self, buff, cm):
-        if TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_ID_ITEM':
-            self.item = [StringIdItem(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CODE_ITEM':
-
-            self.item = CodeItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_ID_ITEM':
-
-            self.item = TypeIdItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_PROTO_ID_ITEM':
-
-            self.item = ProtoIdItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_FIELD_ID_ITEM':
-
-            self.item = FieldIdItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_METHOD_ID_ITEM':
-
-            self.item = MethodIdItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DEF_ITEM':
-
-            self.item = ClassDefItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_HEADER_ITEM':
-
-            self.item = HeaderItem(self.size, buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_LIST':
-
-            self.item = [TypeList(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_DATA_ITEM':
-
-            self.item = [StringDataItem(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_DEBUG_INFO_ITEM':
-
-            self.item = DebugInfoItemEmpty(buff, cm)
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_ENCODED_ARRAY_ITEM':
-
-            self.item = [EncodedArrayItem(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_CLASS_DATA_ITEM':
-
-            self.item = [ClassDataItem(buff, cm) for i in xrange(0,
-                         self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_MAP_LIST':
-
-            pass  # It's me I think !!!
+            bytecode.Exit('Map item %d @ 0x%x(%d) is unknown' % (self.type, buff.get_idx(), buff.get_idx()))
 
     def reload(self):
-        if self.item != None:
+        if self.item is not None:
             if isinstance(self.item, list):
                 for i in self.item:
                     i.reload()
@@ -7637,7 +7516,7 @@ class MapItem(object):
     def show(self):
         bytecode._Print('\tMAP_TYPE_ITEM', TYPE_MAP_ITEM[self.type])
 
-        if self.item != None:
+        if self.item is not None:
             if isinstance(self.item, list):
                 for i in self.item:
                     i.show()
@@ -7647,7 +7526,7 @@ class MapItem(object):
     def pretty_show(self):
         bytecode._Print('\tMAP_TYPE_ITEM', TYPE_MAP_ITEM[self.type])
 
-        if self.item != None:
+        if self.item is not None:
             if isinstance(self.item, list):
                 for i in self.item:
                     if isinstance(i, ClassDataItem):
@@ -7669,7 +7548,8 @@ class MapItem(object):
         return pack('=H', self.type) + pack('=H', self.unused) \
             + pack('=I', self.size) + pack('=I', self.offset)
 
-    def get_length(self):
+    @staticmethod
+    def get_length():
         return calcsize('=HHII')
 
     def get_item(self):
@@ -7678,6 +7558,17 @@ class MapItem(object):
     def set_item(self, item):
         self.item = item
 
+    def get_off(self):
+        return self.off
+
+    def get_offset(self):
+        return self.offset
+
+    def get_type(self):
+        return self.type
+
+    def get_size(self):
+        return self.size
 
 class OffObj(object):
 
@@ -7695,7 +7586,6 @@ class ClassManager(object):
         self.vm = vm
         self.buff = vm
 
-        self.decompiler_ob = None
         self.vmanalysis_ob = None
         self.gvmanalysis_ob = None
 
@@ -7749,9 +7639,6 @@ class ClassManager(object):
     def get_string_by_offset(self, offset):
         return self.__strings_off[offset]
 
-    def get_lazy_analysis(self):
-        return self.lazy_analysis
-
     def get_vmanalysis(self):
         return self.vmanalysis_ob
 
@@ -7763,9 +7650,6 @@ class ClassManager(object):
 
     def set_gvmanalysis(self, gvmanalysis):
         self.gvmanalysis_ob = gvmanalysis
-
-    def set_decompiler(self, decompiler):
-        self.decompiler_ob = decompiler
 
     def get_engine(self):
         return self.engine[0]
@@ -7933,7 +7817,7 @@ class ClassManager(object):
 
         class_def = self.__manage_item['TYPE_CLASS_DEF_ITEM'
                 ].get_class_idx(method.get_class_idx())
-        if class_def != None:
+        if class_def is not None:
             try:
                 name = 'METHOD_' \
                     + bytecode.FormatNameToPython(encoded_method.get_name())
@@ -8027,19 +7911,14 @@ class MapList(object):
        This class can parse the "map_list" of the dex format
     """
 
-    def __init__(
-        self,
-        cm,
-        off,
-        buff,
-        ):
+    def __init__(self, cm, off, buff):
         self.CM = cm
 
         buff.set_idx(off)
 
         self.offset = off
 
-        self.size = unpack('=I', buff.read(4))[0]
+        self.size = unpack('=I', buff.read(4))[0]   # The number of MapItem
 
         self.map_item = []
         for i in xrange(0, self.size):
@@ -8055,8 +7934,7 @@ class MapList(object):
                 mi.set_item(self)
                 c_item = mi.get_item()
 
-            self.CM.add_type_item(TYPE_MAP_ITEM[mi.get_type()], mi,
-                                  c_item)
+            self.CM.add_type_item(TYPE_MAP_ITEM[mi.get_type()], mi, c_item)
 
         for i in self.map_item:
             i.reload()
@@ -8150,56 +8028,36 @@ class DalvikVMFormat(bytecode._Bytecode):
           DalvikVMFormat( read("classes.dex") )
     """
 
-    def __init__(
-        self,
-        buff,
-        decompiler=None,
-        config=None,
-        ):
+    def __init__(self, buff, config=None):
         super(DalvikVMFormat, self).__init__(buff)
 
         self.config = config
         if not self.config:
             self.config = \
                 {'RECODE_ASCII_STRING': CONF['RECODE_ASCII_STRING'],
-                 'RECODE_ASCII_STRING_METH': CONF['RECODE_ASCII_STRING_METH'
-                 ], 'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
-
+                 'RECODE_ASCII_STRING_METH': CONF['RECODE_ASCII_STRING_METH'],
+                 'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
         self.CM = ClassManager(self, self.config)
-        self.CM.set_decompiler(decompiler)
 
-        self._preload(buff)
-        self._load(buff)
+        self._load()
         print "After put dalvik data to all data structure, it is the time :"
         import time
         print time.strftime("%H:%M:%S", time.localtime())
 
-    def _preload(self, buff):
-        pass
-
-    # put all the buff data of dex file into corresponding data structure, time consuming
-    def _load(self, buff):
-        self.__header = HeaderItem(0, self, ClassManager(None,
-                                   self.config))
+    def _load(self):
+        self.__header = HeaderItem(self, ClassManager(None, self.config))
         if self.__header.map_off == 0:
-            bytecode.Warning('no map list ...')
+            bytecode.Warning('no map list!!!')
             exit()
         else:
-            self.map_list = MapList(self.CM, self.__header.map_off,
-                                    self)
-            self.classes = \
-                self.map_list.get_item_type('TYPE_CLASS_DEF_ITEM')
-            self.methods = \
-                self.map_list.get_item_type('TYPE_METHOD_ID_ITEM')
-            self.fields = \
-                self.map_list.get_item_type('TYPE_FIELD_ID_ITEM')
+            self.map_list = MapList(self.CM, self.__header.map_off,self)
+            self.classes = self.map_list.get_item_type('TYPE_CLASS_DEF_ITEM')
+            self.methods = self.map_list.get_item_type('TYPE_METHOD_ID_ITEM')
+            self.fields = self.map_list.get_item_type('TYPE_FIELD_ID_ITEM')
             self.codes = self.map_list.get_item_type('TYPE_CODE_ITEM')
-            self.strings = \
-                self.map_list.get_item_type('TYPE_STRING_DATA_ITEM')
-            self.debug = \
-                self.map_list.get_item_type('TYPE_DEBUG_INFO_ITEM')
-            self.header = self.map_list.get_item_type('TYPE_HEADER_ITEM'
-                    )
+            self.strings = self.map_list.get_item_type('TYPE_STRING_DATA_ITEM')
+            self.debug = self.map_list.get_item_type('TYPE_DEBUG_INFO_ITEM')
+            self.header = self.map_list.get_item_type('TYPE_HEADER_ITEM')
 
         self.classes_names = None
         self.__cache_methods = None
@@ -8374,7 +8232,8 @@ class DalvikVMFormat(bytecode._Bytecode):
 
         return self.fix_checksums(buff)
 
-    def fix_checksums(self, buff):
+    @staticmethod
+    def fix_checksums(buff):
         """
           Fix a dex format buffer by setting all checksums
 

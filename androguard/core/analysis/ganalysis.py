@@ -896,9 +896,9 @@ class Graph(object):
         >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
         >>> G.add_weighted_edges_from([(0,1,3.0),(1,2,7.5)])
         """
+        #do not use this function
 
-        self.add_edges_from((u, v, {weight: d}) for (u, v, d) in
-                            ebunch, **attr)
+        # self.add_edges_from((u, v, {weight: d}) for (u, v, d) in ebunch, **attr)
 
     def remove_edge(self, u, v):
         """Remove the edge between u and v.
@@ -3307,7 +3307,7 @@ class GVMAnalysis(object):
         self.GI = DiGraph()
 
         for j in \
-            self.vmx.get_tainted_packages().get_internal_packages():
+            self.vmx.tainted_packages.get_internal_packages():
             (src_class_name, src_method_name, src_descriptor) = \
                 j.get_src(self.vm.get_class_manager())
             (dst_class_name, dst_method_name, dst_descriptor) = \
@@ -3481,6 +3481,7 @@ class GVMAnalysis(object):
                         self.G.add_edge(n2.id, n1.id)
 
                         n1.add_risk('DEXCLASSLOADER')
+
 
     def _get_exist_node(
         self,

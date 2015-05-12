@@ -53,21 +53,13 @@ class Color(object):
 CONF = {  # Full python or mix python/c++ (native)
           # "ENGINE" : "automatic",
           #    "DEOBFUSCATED_STRING_METH" : get_deobfuscated_string,
-    'BIN_DED': 'ded.sh',
-    'PATH_DED': './decompiler/ded/',
-    'PATH_DEX2JAR': './decompiler/dex2jar/',
-    'BIN_DEX2JAR': 'dex2jar.sh',
-    'PATH_JAD': './decompiler/jad/',
-    'BIN_JAD': 'jad',
-    'BIN_WINEJAD': 'jad.exe',
-    'PATH_FERNFLOWER': './decompiler/fernflower/',
-    'BIN_FERNFLOWER': 'fernflower.jar',
+    'RECODE_ASCII_STRING': False,
+    'RECODE_ASCII_STRING_METH': None,
+    'LAZY_ANALYSIS': False,
+    'ENGINE': 'python',
     'OPTIONS_FERNFLOWER': {'dgs': '1', 'asc': '1'},
     'PRETTY_SHOW': 1,
     'TMP_DIRECTORY': '/tmp/',
-    'ENGINE': 'python',
-    'RECODE_ASCII_STRING': False,
-    'RECODE_ASCII_STRING_METH': None,
     'DEOBFUSCATED_STRING': True,
     'PATH_JARSIGNER': 'jarsigner',
     'COLORS': {
@@ -94,7 +86,6 @@ CONF = {  # Full python or mix python/c++ (native)
             },
         },
     'PRINT_FCT': sys.stdout.write,
-    'LAZY_ANALYSIS': False,
     'MAGIC_PATH_FILE': None,
     }
 

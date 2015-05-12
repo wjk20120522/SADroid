@@ -131,7 +131,7 @@ def sign_apk(filename, keystore, storepass):
         keystore,
         filename,
         'alias_name',
-        ], stdout=PIPE, stderr=STDOUT)
+        ], PIPE, STDOUT)
     (stdout, stderr) = compile.communicate()
 
 
@@ -190,45 +190,34 @@ class APK(object):
             self.__raw = read(filename)
 
         self.zipmodule = zipmodule
-
         if zipmodule == 0x0000:
             self.zip = ChilkatZip(self.__raw)
         elif zipmodule == 0x0002:
             from androguard.patch import zipfile
-            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw),
-                    mode=mode)
+            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw), mode)
         else:
             import zipfile
-            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw),
-                    mode=mode)
+            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw), mode)
 
         for i in self.zip.namelist():
             if i == 'AndroidManifest.xml':
                 self.axml[i] = AXMLPrinter(self.zip.read(i))
-                try:
-                    self.xml[i] = minidom.parseString(self.axml[i].get_buff())
-                except:
-                    self.xml[i] = None
+                self.xml[i] = minidom.parseString(self.axml[i].get_buff())
                 if self.xml[i]:
-                    self.package = self.xml[i].documentElement.getAttribute('package'
-                            )
+                    self.package = self.xml[i].documentElement.getAttribute('package')
                     self.androidversion['Code'] = \
-                        self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI,
-                            'versionCode')
+                        self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI, 'versionCode')
                     self.androidversion['Name'] = \
-                        self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI,
-                            'versionName')
+                        self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI, 'versionName')
 
-                    for item in \
-                        self.xml[i].getElementsByTagName('uses-permission'
-                            ):
-                        self.permissions.append(str(item.getAttributeNS(NS_ANDROID_URI,
-                                'name')))
+                    for item in self.xml[i].getElementsByTagName('uses-permission'):
+                        self.permissions.append(str(item.getAttributeNS(NS_ANDROID_URI, 'name')))
 
                     self.valid_apk = True
 
                     if not os.path.exists('output'):
                         os.mkdir('output')
+            # may handle other xml files
         self.get_files_types()
 
     def get_AndroidManifest(self):
@@ -305,8 +294,8 @@ class APK(object):
         except ImportError:
             # no lib magic !
             for i in self.get_files():
-                buffer = self.zip.read(i)
-                self.files_crc32[i] = crc32(buffer)
+                buff = self.zip.read(i)
+                self.files_crc32[i] = crc32(buff)
                 self.files[i] = 'Unknown'
             return self.files
 
@@ -324,25 +313,26 @@ class APK(object):
             ms.load()
 
             for i in self.get_files():
-                buffer = self.zip.read(i)
-                self.files[i] = ms.buffer(buffer)
-                self.files[i] = self._patch_magic(buffer, self.files[i])
-                self.files_crc32[i] = crc32(buffer)
+                buff = self.zip.read(i)
+                self.files[i] = ms.buffer(buff)
+                self.files[i] = self._patch_magic(buff, self.files[i])
+                self.files_crc32[i] = crc32(buff)
         else:
-            m = magic.Magic(magic_file=self.magic_file)
+            m = magic.Magic(self.magic_file)
             for i in self.get_files():
-                buffer = self.zip.read(i)
-                self.files[i] = m.from_buffer(buffer)
-                self.files[i] = self._patch_magic(buffer, self.files[i])
-                self.files_crc32[i] = crc32(buffer)
+                buff = self.zip.read(i)
+                self.files[i] = m.from_buffer(buff)
+                self.files[i] = self._patch_magic(buff, self.files[i])
+                self.files_crc32[i] = crc32(buff)
 
         return self.files
 
-    def _patch_magic(self, buffer, orig):
+    @staticmethod
+    def _patch_magic(buff, orig):
         if 'Zip' in orig or 'DBase' in orig:
-            val = androconf.is_android_raw(buffer)
+            val = androconf.is_android_raw(buff)
             if val == 'APK':
-                if androconf.is_valid_android_raw(buffer):
+                if androconf.is_valid_android_raw(buff):
                     return 'Android application package file'
             elif val == 'AXML':
                 return "Android's binary XML"
@@ -630,7 +620,7 @@ class APK(object):
         data = chilkat.CkByteData()
         data.append2(f, len(f))
         success = cert.LoadFromBinary(data)
-        return (success, cert)
+        return success, cert
 
     def new_zip(
         self,
@@ -658,13 +648,13 @@ class APK(object):
             zout = zipfile.ZipFile(filename, 'w')
 
         for item in self.zip.infolist():
-            if deleted_files != None:
-                if re.match(deleted_files, item.filename) == None:
+            if deleted_files is not None:
+                if re.match(deleted_files, item.filename) is None:
                     if item.filename in new_files:
                         zout.writestr(item, new_files[item.filename])
                     else:
-                        buffer = self.zip.read(item.filename)
-                        zout.writestr(item, buffer)
+                        buff = self.zip.read(item.filename)
+                        zout.writestr(item, buff)
         zout.close()
 
     def get_android_manifest_axml(self):
