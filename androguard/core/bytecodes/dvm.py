@@ -1956,16 +1956,7 @@ def utf8_to_string(buff, length):
     for _ in xrange(length):
         first_char = ord(buff.read(1))
         value = first_char >> 4
-        if value in (
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            0x07,
-            ):
+        if value in (0, 1, 2, 3, 4, 5, 6, 0x07,):
             if first_char == 0:
                 warning('at offset %x: single zero byte illegal'
                         % buff.get_idx())
@@ -1996,8 +1987,8 @@ def utf8_to_string(buff, length):
             chars.append(unichr(value))
         else:
             warning('at offset %x: illegal utf8' % buff.get_idx())
-    return ''.join(chars).encode('utf-8')
 
+    return ''.join(chars).encode('utf-8')
 
 class StringDataItem(object):
 
@@ -2018,7 +2009,9 @@ class StringDataItem(object):
         self.utf16_size = readuleb128(buff)
 
         self.data = utf8_to_string(buff, self.utf16_size)
+
         expected = buff.read(1)
+
         if expected != '\00':
             warning('\x00 expected at offset: %x, found: %x'
                     % (buff.get_idx(), expected))
@@ -2057,8 +2050,8 @@ class StringDataItem(object):
         bytecode._PrintSubBanner('String Data Item')
         bytecode._PrintDefault('utf16_size=%d data=%s\n'
                                % (self.utf16_size, repr(self.data)))
-
-    def get_obj(self):
+    @staticmethod
+    def get_obj():
         return []
 
     def get_raw(self):
@@ -7421,6 +7414,8 @@ class MapItem(object):
             self.item = HeaderItem(buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_ID_ITEM':
             self.item = [StringIdItem(buff, cm) for i in xrange(0, self.size)]
+        elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_DATA_ITEM':
+            self.item = [StringDataItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_ID_ITEM':
             self.item = TypeHIdItem(self.size, buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_PROTO_ID_ITEM':
@@ -7448,8 +7443,7 @@ class MapItem(object):
             self.item = [AnnotationSetRefList(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_LIST':
             self.item = [TypeList(buff, cm) for i in xrange(0, self.size)]
-        elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_DATA_ITEM':
-            self.item = [StringDataItem(buff, cm) for i in xrange(0, self.size)]
+
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_DEBUG_INFO_ITEM':
             self.item = DebugInfoItemEmpty(buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_MAP_LIST':
@@ -7458,12 +7452,11 @@ class MapItem(object):
             bytecode.Exit('Map item %d @ 0x%x(%d) is unknown' % (self.type, buff.get_idx(), buff.get_idx()))
 
     def reload(self):
-        if self.item is not None:
-            if isinstance(self.item, list):
-                for i in self.item:
-                    i.reload()
-            else:
-                self.item.reload()
+        if isinstance(self.item, list):
+            for i in self.item:
+                i.reload()
+        else:
+            self.item.reload()
 
     def show(self):
         bytecode._Print('\tMAP_TYPE_ITEM', TYPE_MAP_ITEM[self.type])
@@ -7567,7 +7560,8 @@ class ClassManager(object):
         if self.vm:
             self.odex_format = self.vm.get_format_type() == 'ODEX'
 
-    def get_ascii_string(self, s):
+    @staticmethod
+    def get_ascii_string(s):
         try:
             return s.decode('ascii')
         except UnicodeDecodeError:
@@ -7609,28 +7603,27 @@ class ClassManager(object):
     def get_all_engine(self):
         return self.engine
 
-    def add_type_item(self, type_item, c_item, item):
-        self.__manage_item[type_item] = item
+    def add_type_item(self, type_item, mi, c_item):
+        self.__manage_item[type_item] = c_item
 
-        self.__obj_offset[c_item.get_off()] = c_item
-        self.__item_offset[c_item.get_offset()] = item
+        self.__obj_offset[mi.get_off()] = mi
+        self.__item_offset[mi.get_offset()] = c_item
 
         sdi = False
         if type_item == 'TYPE_STRING_DATA_ITEM':
             sdi = True
 
-        if item is not None:
-            if isinstance(item, list):
-                for i in item:
-                    goff = i.offset
-                    self.__manage_item_off.append(goff)
+        if isinstance(c_item, list):
+            for i in c_item:
+                goff = i.offset
+                self.__manage_item_off.append(goff)
 
-                    self.__obj_offset[i.get_off()] = i
+                self.__obj_offset[i.get_off()] = i
 
-                    if sdi is True:
-                        self.__strings_off[goff] = i
-            else:
-                self.__manage_item_off.append(c_item.get_offset())
+                if sdi is True:
+                    self.__strings_off[goff] = i
+        else:
+            self.__manage_item_off.append(mi.get_offset())
 
     def get_code(self, idx):
         try:
@@ -7655,17 +7648,17 @@ class ClassManager(object):
             return self.hook_strings[idx]
 
         try:
-            off = self.__manage_item['TYPE_STRING_ID_ITEM'
-                    ][idx].get_string_data_off()
+            off = self.__manage_item['TYPE_STRING_ID_ITEM'][idx].get_string_data_off()
         except IndexError:
+            print 'can here'
             bytecode.Warning('unknown string item @ %d' % idx)
             return 'AG:IS: invalid string'
 
         try:
-            if self.recode_ascii_string:
-                if self.recode_ascii_string_meth:
-                    return self.recode_ascii_string_meth(self.__strings_off[off].get())
-                return self.get_ascii_string(self.__strings_off[off].get())
+            # if self.recode_ascii_string:
+            #     if self.recode_ascii_string_meth:
+            #         return self.recode_ascii_string_meth(self.__strings_off[off].get())
+            #     return self.get_ascii_string(self.__strings_off[off].get())
             return self.__strings_off[off].get()
         except KeyError:
             bytecode.Warning('unknown string item @ 0x%x(%d)' % (off,
@@ -7674,8 +7667,7 @@ class ClassManager(object):
 
     def get_raw_string(self, idx):
         try:
-            off = self.__manage_item['TYPE_STRING_ID_ITEM'
-                    ][idx].get_string_data_off()
+            off = self.__manage_item['TYPE_STRING_ID_ITEM'][idx].get_string_data_off()
         except IndexError:
             bytecode.Warning('unknown string item @ %d' % idx)
             return 'AG:IS: invalid string'
@@ -7886,7 +7878,8 @@ class MapList(object):
         for i in self.map_item:
             i.reload()
 
-    def reload(self):
+    @staticmethod
+    def reload():
         pass
 
     def get_off(self):

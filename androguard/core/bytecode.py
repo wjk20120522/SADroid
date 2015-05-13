@@ -868,18 +868,18 @@ class _Bytecode(object):
             fd.write(buff)
 
 
-def FormatClassToJava(input):
+def FormatClassToJava(inputclass):
     """
        Transoform a typical xml format class into java format
 
-       :param input: the input class name
+       :param inputclass: the input class name
        :rtype: string
     """
 
-    return 'L' + input.replace('.', '/') + ';'
+    return 'L' + inputclass.replace('.', '/') + ';'
 
 
-def FormatClassToPython(input):
+def FormatClassToPython():
     i = input[:-1]
     i = i.replace('/', '_')
     i = i.replace('$', '_')
