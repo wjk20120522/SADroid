@@ -2188,7 +2188,7 @@ class TypeHIdItem(object):
 
     def get(self, idx):
         try:
-            return self.type[idx].get_descriptor_idx()
+            return self.type[idx].get_descriptor_idx()  # return idx
         except IndexError:
             return -1
 
@@ -3078,6 +3078,7 @@ class EncodedMethod(object):
         self.proto = ''.join(i for i in v[2])
 
         self.code = self.CM.get_code(self.code_off)
+
 
     def get_locals(self):
         ret = self.proto.split(')')
@@ -6691,16 +6692,10 @@ class Unresolved(Instruction):
         return self.data
 
 
-def get_instruction(
-    cm,
-    op_value,
-    buff,
-    odex=False,
-    ):
+def get_instruction(cm, op_value, buff, odex=False):
     try:
-        if not odex and op_value >= 0xe3 and op_value <= 0xfe:
+        if not odex and 0xe3 <= op_value <= 0xfe:
             return InstructionInvalid(cm, buff)
-
         try:
             return DALVIK_OPCODES_FORMAT[op_value][0](cm, buff)
         except KeyError:
@@ -6723,17 +6718,14 @@ def get_instruction_payload(op_value, buff):
 
 class LinearSweepAlgorithm(object):
 
+    def __init__(self):
+        self.odex = None
+
     """
         This class is used to disassemble a method. The algorithm used by this class is linear sweep.
     """
 
-    def get_instructions(
-        self,
-        cm,
-        size,
-        insn,
-        idx,
-        ):
+    def get_instructions(self, cm, size, insn, idx):
         """
             :param cm: a ClassManager object
             :type cm: :class:`ClassManager` object
@@ -6795,14 +6787,11 @@ class LinearSweepAlgorithm(object):
                     classic_instruction = False
 
           # classical instructions
-
             if classic_instruction:
                 op_value = unpack('=B', insn[idx])[0]
-                obj = get_instruction(cm, op_value, insn[idx:],
-                        self.odex)
+                obj = get_instruction(cm, op_value, insn[idx:], self.odex)
 
           # emit instruction
-
             yield obj
             idx = idx + obj.get_length()
 
@@ -6822,13 +6811,7 @@ class DCode(object):
         :type buff: string
     """
 
-    def __init__(
-        self,
-        class_manager,
-        offset,
-        size,
-        buff,
-        ):
+    def __init__(self, class_manager, offset, size, buff):
         self.CM = class_manager
         self.insn = buff
         self.offset = offset
@@ -6883,21 +6866,16 @@ class DCode(object):
     def get_instructions(self):
         """
             Get the instructions
-
             :rtype: a generator of each :class:`Instruction` (or a cached list of instructions if you have setup instructions)
         """
-
         # it is possible to a cache for instructions (avoid a new disasm)
-
         if self.cached_instructions:
             for i in self.cached_instructions:
                 yield i
         else:
-
             if self.rcache >= 5:
                 lsa = LinearSweepAlgorithm()
-                for i in lsa.get_instructions(self.CM, self.size,
-                        self.insn, self.idx):
+                for i in lsa.get_instructions(self.CM, self.size, self.insn, self.idx):
                     self.cached_instructions.append(i)
 
                 for i in self.cached_instructions:
@@ -6906,21 +6884,14 @@ class DCode(object):
                 self.rcache += 1
                 if self.size >= 1000:
                     self.rcache = 5
-
                 lsa = LinearSweepAlgorithm()
-                for i in lsa.get_instructions(self.CM, self.size,
-                        self.insn, self.idx):
+                for i in lsa.get_instructions(self.CM, self.size, self.insn, self.idx):
                     yield i
 
     def reload(self):
         pass
 
-    def add_inote(
-        self,
-        msg,
-        idx,
-        off=None,
-        ):
+    def add_inote(self, msg, idx, off=None):
         """
           Add a message to a specific instruction by using (default) the index of the address if specified
 
@@ -6932,7 +6903,7 @@ class DCode(object):
           :type off: int
       """
 
-        if off != None:
+        if off is not None:
             idx = self.off_to_pos(off)
 
         if idx not in self.notes:
@@ -6952,7 +6923,7 @@ class DCode(object):
             :rtype: an :class:`Instruction` object
         """
 
-        if off != None:
+        if off is not None:
             idx = self.off_to_pos(off)
         return [i for i in self.get_instructions()][idx]
 
@@ -7144,6 +7115,9 @@ class DalvikCode(object):
 
             self.handlers = EncodedCatchHandlerList(buff, self.__CM)
 
+    def reload(self):
+        self.code.reload()
+
     def get_registers_size(self):
         """
             Get the number of registers used by this code
@@ -7237,9 +7211,6 @@ class DalvikCode(object):
     def set_idx(self, idx):
         self.code.set_idx(idx)
 
-    def reload(self):
-        self.code.reload()
-
     def get_length(self):
         return self.insns_size
 
@@ -7258,7 +7229,8 @@ class DalvikCode(object):
         self.code.show()
         self._end_show()
 
-    def _end_show(self):
+    @staticmethod
+    def _end_show():
         bytecode._PrintBanner()
 
     def pretty_show(self, m_a):
@@ -7288,12 +7260,7 @@ class DalvikCode(object):
 
         return buff
 
-    def add_inote(
-        self,
-        msg,
-        idx,
-        off=None,
-        ):
+    def add_inote(self, msg, idx, off=None):
         """
             Add a message to a specific instruction by using (default) the index of the address if specified
 
@@ -7304,7 +7271,6 @@ class DalvikCode(object):
             :param off: address of the instruction
             :type off: int
         """
-
         if self.code:
             return self.code.add_inote(msg, idx, off)
 
@@ -7339,12 +7305,7 @@ class DalvikCode(object):
 
 class CodeItem(object):
 
-    def __init__(
-        self,
-        size,
-        buff,
-        cm,
-        ):
+    def __init__(self, size, buff, cm):
         self.__CM = cm
 
         self.offset = buff.get_idx()
@@ -7443,7 +7404,6 @@ class MapItem(object):
             self.item = [AnnotationSetRefList(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_TYPE_LIST':
             self.item = [TypeList(buff, cm) for i in xrange(0, self.size)]
-
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_DEBUG_INFO_ITEM':
             self.item = DebugInfoItemEmpty(buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_MAP_LIST':
