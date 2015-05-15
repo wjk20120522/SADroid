@@ -468,11 +468,14 @@ class TaintedVariable(object):
 
 
 class TaintedVariables(object):
+    """
+    The class is used to tainted the variables so we can get information when construct CFG
+
+    """
 
     def __init__(self, _vm):
         self.__vm = _vm
-        self.__vars = {TAINTED_LOCAL_VARIABLE: {}, TAINTED_FIELD: {},
-                       TAINTED_STRING: {}}
+        self.__vars = {TAINTED_LOCAL_VARIABLE: {}, TAINTED_FIELD: {}, TAINTED_STRING: {}}
 
         self.__cache_field_by_method = {}
         self.__cache_string_by_method = {}
@@ -1868,8 +1871,7 @@ class VMAnalysis(object):
         self.signature = None
 
         for i in self.__vm.get_all_fields():
-            self.tainted_variables.add([i.get_class_name(),
-                    i.get_descriptor(), i.get_name()], TAINTED_FIELD)
+            self.tainted_variables.add([i.get_class_name(), i.get_descriptor(), i.get_name()], TAINTED_FIELD)
 
         self.methods = []
         self.hmethods = {}
