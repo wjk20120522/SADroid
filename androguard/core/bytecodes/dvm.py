@@ -159,12 +159,9 @@ BRANCH_DVM_OPCODES = [
 
 def clean_name_instruction(instruction):
     op_value = instruction.get_op_value()
-
     # goto range
-
-    if op_value >= 0x28 and op_value <= 0x2a:
+    if   0x28 <= op_value <= 0x2a:
         return 'goto'
-
     return instruction.get_name()
 
 
@@ -3019,7 +3016,6 @@ class EncodedMethod(object):
     def get_method_idx(self):
         """
             Return the real index of the method
-
             :rtype: int
         """
 
@@ -3029,19 +3025,15 @@ class EncodedMethod(object):
         """
           Return index into the method_ids list for the identity of this method (includes the name and descriptor),
           represented as a difference from the index of previous element in the list
-
           :rtype: int
       """
-
         return self.method_idx_diff
 
     def get_access_flags(self):
         """
           Return the access flags of the method
-
           :rtype: int
         """
-
         return self.access_flags
 
     def get_code_off(self):
@@ -3210,17 +3202,15 @@ class EncodedMethod(object):
           :rtype: int
         """
 
-        if self.code != None:
+        if self.code is not None:
             return self.code.get_length()
         return 0
 
     def get_code(self):
         """
           Return the code object associated to the method
-
           :rtype: :class:`DalvikCode` object
         """
-
         return self.code
 
     def get_instructions(self):
@@ -3230,7 +3220,7 @@ class EncodedMethod(object):
             :rtype: a generator of each :class:`Instruction` (or a cached list of instructions if you have setup instructions)
         """
 
-        if self.code == None:
+        if self.code is None:
             return []
         return self.code.get_bc().get_instructions()
 
@@ -3242,7 +3232,7 @@ class EncodedMethod(object):
             :type instructions: a list of :class:`Instruction`
         """
 
-        if self.code == None:
+        if self.code is None:
             return []
         return self.code.get_bc().set_instructions(instructions)
 
@@ -3269,7 +3259,7 @@ class EncodedMethod(object):
           :rtype: :class:`DebugInfoItem`
         """
 
-        if self.code == None:
+        if self.code is None:
             return None
         return self.code.get_debug()
 
@@ -3303,12 +3293,7 @@ class EncodedMethod(object):
     def get_triple(self):
         return self.CM.get_method_ref(self.method_idx).get_triple()
 
-    def add_inote(
-        self,
-        msg,
-        idx,
-        off=None,
-        ):
+    def add_inote(self, msg, idx, off=None):
         """
             Add a message to a specific instruction by using (default) the index of the address if specified
 
@@ -3319,8 +3304,7 @@ class EncodedMethod(object):
             :param off: address of the instruction
             :type off: int
         """
-
-        if self.code != None:
+        if self.code is not None:
             self.code.add_inote(msg, idx, off)
 
     def add_note(self, msg):
@@ -3340,8 +3324,7 @@ class EncodedMethod(object):
             :param idx: the index
             :type idx: int
         """
-
-        if self.code != None:
+        if self.code is not None:
             self.code.set_idx(idx)
 
     def set_name(self, value):
@@ -3349,7 +3332,7 @@ class EncodedMethod(object):
         self.reload()
 
     def get_raw(self):
-        if self.code != None:
+        if self.code is not None:
             self.code_off = self.code.get_off()
 
         return writeuleb128(self.method_idx_diff) \
@@ -8203,18 +8186,15 @@ class DalvikVMFormat(bytecode._Bytecode):
             :rtype: a list of string
         """
 
-        if self.classes_names == None or update:
-            self.classes_names = [i.get_name() for i in
-                                  self.classes.class_def]
+        if self.classes_names is None or update:
+            self.classes_names = [i.get_name() for i in self.classes.class_def]
         return self.classes_names
 
     def get_classes(self):
         """
           Return all classes
-
           :rtype: a list of :class:`ClassDefItem` objects
         """
-
         return self.classes.class_def
 
     def get_class(self, name):

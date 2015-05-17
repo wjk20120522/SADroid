@@ -174,16 +174,10 @@ class DVMBasicBlock(object):
         A simple basic block of a dalvik method
     """
 
-    def __init__(
-        self,
-        start,
-        vm,
-        method,
-        context,
-        ):
-        self.__vm = vm
-        self.method = method
-        self.context = context
+    def __init__(self, start, vm, method, context):
+        self.__vm = vm          #DalvikVMFormat
+        self.method = method    #EncodedMethod
+        self.context = context  #BasicBlocks
 
         self.last_length = 0
         self.nb_instructions = 0
@@ -197,6 +191,8 @@ class DVMBasicBlock(object):
         self.special_ins = {}
 
         self.name = '%s-BB@0x%x' % (self.method.get_name(), self.start)
+        print self.name
+
         self.exception_analysis = None
 
         self.tainted_variables = self.context.get_tainted_variables()
@@ -379,13 +375,7 @@ TAINTED_STRING = 2
 
 class PathVar(object):
 
-    def __init__(
-        self,
-        access,
-        idx,
-        dst_idx,
-        info_obj,
-        ):
+    def __init__(self, access,idx, dst_idx, info_obj):
         self.access_flag = access
         self.idx = idx
         self.dst_idx = dst_idx
@@ -1631,28 +1621,21 @@ class MethodAnalysis(object):
         :type method: a :class:`EncodedMethod` object
     """
 
-    def __init__(
-        self,
-        vm,
-        method,
-        tv,
-        ):
-        self.__vm = vm
-        self.method = method
-
-        self.tainted = tv
+    def __init__(self, vm, method, tv):
+        self.__vm = vm              # DalvikVMFormat
+        self.method = method        # EncodedMethod
+        self.tainted = tv           # VmAnalysis
 
         self.basic_blocks = BasicBlocks(self.__vm, self.tainted)
         self.exceptions = Exceptions(self.__vm)
 
-        code = self.method.get_code()
+        code = self.method.get_code()   # code:DalvikCode
 
-        if code == None:
+        if code is None:
             return
 
-        current_basic = BO['BasicClass'](0, self.__vm, self.method,
-                self.basic_blocks)
-        self.basic_blocks.push(current_basic)
+        current_basic = BO['BasicClass'](0, self.__vm, self.method, self.basic_blocks)
+        self.basic_blocks.push(current_basic)   # each element's type is DVMBasicBlock
 
         # #########################################################
         # bc is 'DCode' object
@@ -1857,11 +1840,11 @@ class VMAnalysis(object):
         for i in self.__vm.get_all_fields():
             self.tainted_variables.add([i.get_class_name(), i.get_descriptor(), i.get_name()], TAINTED_FIELD)
 
-        self.methods = []
-        self.hmethods = {}
-        self.__nmethods = {}
+        self.methods = []   # the list of MethodAnalysis
+        self.hmethods = {}  # link the EncodedMethod with MethodAnalysis
+        self.__nmethods = {}    #link the Method Name with MethodAnalysis
 
-        for i in self.__vm.get_methods():
+        for i in self.__vm.get_methods():   #the list of EncodedMethod
             x = MethodAnalysis(self.__vm, i, self)
             self.methods.append(x)
             self.hmethods[i] = x
@@ -1892,13 +1875,7 @@ class VMAnalysis(object):
         for i in self.hmethods:
             yield self.hmethods[i]
 
-    def get_method_signature(
-        self,
-        method,
-        grammar_type='',
-        options={},
-        predef_sign='',
-        ):
+    def get_method_signature(self, method, grammar_type='', options={}, predef_sign=''):
         """
             Return a specific signature for a specific method
 
@@ -1917,7 +1894,7 @@ class VMAnalysis(object):
             :rtype: a :class:`Sign` object
         """
 
-        if self.signature == None:
+        if self.signature is None:
             self.signature = Signature(self)
 
         if predef_sign != '':
