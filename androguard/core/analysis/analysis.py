@@ -487,14 +487,8 @@ class TaintedVariables(object):
         except KeyError:
             return None
 
-    def get_field(
-        self,
-        class_name,
-        name,
-        descriptor,
-        ):
+    def get_field(self, class_name, name, descriptor):
         key = class_name + descriptor + name
-
         try:
             return self.__vars[TAINTED_FIELD][key]
         except KeyError:
@@ -510,7 +504,6 @@ class TaintedVariables(object):
         return z
 
     # permission functions
-
     def get_permissions_method(self, method):
         permissions = []
 
@@ -555,7 +548,6 @@ class TaintedVariables(object):
         return permissions
 
     # global functions
-
     def get_strings(self):
         for i in self.__vars[TAINTED_STRING]:
             yield (self.__vars[TAINTED_STRING][i], i)
@@ -565,7 +557,6 @@ class TaintedVariables(object):
             yield (self.__vars[TAINTED_FIELD][i], i)
 
     # specifics functions
-
     def get_strings_by_method(self, method):
         z = {}
 
@@ -595,28 +586,20 @@ class TaintedVariables(object):
         except:
             return z
 
-    def add(
-        self,
-        var,
-        _type,
-        _method=None,
-        ):
+    def add(self, var, _type, _method=None):
         if _type == TAINTED_FIELD:
             key = var[0] + var[1] + var[2]
             if key not in self.__vars[TAINTED_FIELD]:
-                self.__vars[TAINTED_FIELD][key] = TaintedVariable(var,
-                        _type)
+                self.__vars[TAINTED_FIELD][key] = TaintedVariable(var, _type)
         elif _type == TAINTED_STRING:
             if var not in self.__vars[TAINTED_STRING]:
-                self.__vars[TAINTED_STRING][var] = TaintedVariable(var,
-                        _type)
+                self.__vars[TAINTED_STRING][var] = TaintedVariable(var, _type)
         elif _type == TAINTED_LOCAL_VARIABLE:
             if _method not in self.__vars[TAINTED_LOCAL_VARIABLE]:
                 self.__vars[TAINTED_LOCAL_VARIABLE][_method] = {}
 
             if var not in self.__vars[TAINTED_LOCAL_VARIABLE][_method]:
-                self.__vars[TAINTED_LOCAL_VARIABLE][_method][var] = \
-                    TaintedVariable(var, _type)
+                self.__vars[TAINTED_LOCAL_VARIABLE][_method][var] = TaintedVariable(var, _type)
 
     def push_info(
         self,
@@ -1870,6 +1853,7 @@ class VMAnalysis(object):
 
         self.signature = None
 
+        # 添加 污点成员
         for i in self.__vm.get_all_fields():
             self.tainted_variables.add([i.get_class_name(), i.get_descriptor(), i.get_name()], TAINTED_FIELD)
 
