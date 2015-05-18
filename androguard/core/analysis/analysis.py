@@ -1020,14 +1020,7 @@ class TaintedPackages(object):
 
     # self.context.get_tainted_packages().push_info( method_info[0], TAINTED_PACKAGE_CALL, idx, self, self.method, method_info[1], method_info[2][0] + method_info[2][1] )
 
-    def push_info(
-        self,
-        class_name,
-        access,
-        idx,
-        method,
-        idx_method,
-        ):
+    def push_info(self, class_name, access, idx, method, idx_method):
         self._add_pkg(class_name)
         p = self.__packages[class_name].push(access, idx,
                 method.get_method_idx(), idx_method)
@@ -1092,18 +1085,14 @@ class TaintedPackages(object):
         """
             :rtype: return a list of the internal packages called in the application
         """
-
         classes = self.__vm.get_classes_names()
         l = []
         for (m, _) in self.get_packages():
-
             paths = m.get_methods()
             for j in paths:
                 if j.get_access_flag() == TAINTED_PACKAGE_CALL:
-                    (dst_class_name, _, _) = \
-                        j.get_dst(self.__vm.get_class_manager())
-                    if dst_class_name in classes and m.get_name() \
-                        in classes:
+                    (dst_class_name, _, _) = j.get_dst(self.__vm.get_class_manager())
+                    if dst_class_name in classes and m.get_name() in classes:
                         l.append(j)
         return l
 
@@ -1174,7 +1163,7 @@ class TaintedPackages(object):
         l = []
         d = {}
         for (m, _) in self.get_packages():
-            if ex.match(m.get_info()) != None:
+            if ex.match(m.get_info()) is not None:
                 for path in m.get_methods():
                     try:
                         d[path.get_class_name() + path.get_name()
@@ -1207,7 +1196,7 @@ class TaintedPackages(object):
             ex = re.compile(class_name)
 
             for (m, _) in self.get_packages():
-                if ex.search(m.get_name()) != None:
+                if ex.search(m.get_name()) is not None:
                     l.extend(m.search_method(name, descriptor))
 
         return l

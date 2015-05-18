@@ -7921,7 +7921,9 @@ class DalvikVMFormat(bytecode._Bytecode):
                  'RECODE_ASCII_STRING_METH': CONF['RECODE_ASCII_STRING_METH'],
                  'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
         self.CM = ClassManager(self, self.config)
-
+        self.classes_names = None
+        self.__cache_methods = None
+        self.__cached_methods_idx = None
         self._load()
         print "After put dalvik data to all data structure, it is the time :"
         import time
@@ -7941,10 +7943,6 @@ class DalvikVMFormat(bytecode._Bytecode):
             self.strings = self.map_list.get_item_type('TYPE_STRING_DATA_ITEM')
             self.debug = self.map_list.get_item_type('TYPE_DEBUG_INFO_ITEM')
             self.header = self.map_list.get_item_type('TYPE_HEADER_ITEM')
-
-        self.classes_names = None
-        self.__cache_methods = None
-        self.__cached_methods_idx = None
 
     def get_classes_def_item(self):
         """
