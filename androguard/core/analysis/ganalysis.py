@@ -42,206 +42,14 @@ __author__ = """\n""".join(['Aric Hagberg (hagberg@lanl.gov)',
 
 class Graph(object):
 
-    """
-    Base class for undirected graphs.
-
-    A Graph stores nodes and edges with optional data, or attributes.
-
-    Graphs hold undirected edges.  Self loops are allowed but multiple
-    (parallel) edges are not.
-
-    Nodes can be arbitrary (hashable) Python objects with optional
-    key/value attributes.
-
-    Edges are represented as links between nodes with optional
-    key/value attributes.
-
-    Parameters
-    ----------
-    data : input graph
-        Data to initialize graph.  If data=None (default) an empty
-        graph is created.  The data can be an edge list, or any
-        NetworkX graph object.  If the corresponding optional Python
-        packages are installed the data can also be a NumPy matrix
-        or 2d ndarray, a SciPy sparse matrix, or a PyGraphviz graph.
-    attr : keyword arguments, optional (default= no attributes)
-        Attributes to add to graph as key=value pairs.
-
-    See Also
-    --------
-    DiGraph
-    MultiGraph
-    MultiDiGraph
-
-    Examples
-    --------
-    Create an empty graph structure (a "null graph") with no nodes and
-    no edges.
-
-    >>> G = nx.Graph()
-
-    G can be grown in several ways.
-
-    **Nodes:**
-
-    Add one node at a time:
-
-    >>> G.add_node(1)
-
-    Add the nodes from any container (a list, dict, set or
-    even the lines from a file or the nodes from another graph).
-
-    >>> G.add_nodes_from([2,3])
-    >>> G.add_nodes_from(range(100,110))
-    >>> H=nx.Graph()
-    >>> H.add_path([0,1,2,3,4,5,6,7,8,9])
-    >>> G.add_nodes_from(H)
-
-    In addition to strings and integers any hashable Python object
-    (except None) can represent a node, e.g. a customized node object,
-    or even another Graph.
-
-    >>> G.add_node(H)
-
-    **Edges:**
-
-    G can also be grown by adding edges.
-
-    Add one edge,
-
-    >>> G.add_edge(1, 2)
-
-    a list of edges,
-
-    >>> G.add_edges_from([(1,2),(1,3)])
-
-    or a collection of edges,
-
-    >>> G.add_edges_from(H.edges())
-
-    If some edges connect nodes not yet in the graph, the nodes
-    are added automatically.  There are no errors when adding
-    nodes or edges that already exist.
-
-    **Attributes:**
-
-    Each graph, node, and edge can hold key/value attribute pairs
-    in an associated attribute dictionary (the keys must be hashable).
-    By default these are empty, but can be added or changed using
-    add_edge, add_node or direct manipulation of the attribute
-    dictionaries named graph, node and edge respectively.
-
-    >>> G = nx.Graph(day="Friday")
-    >>> G.graph
-    {'day': 'Friday'}
-
-    Add node attributes using add_node(), add_nodes_from() or G.node
-
-    >>> G.add_node(1, time='5pm')
-    >>> G.add_nodes_from([3], time='2pm')
-    >>> G.node[1]
-    {'time': '5pm'}
-    >>> G.node[1]['room'] = 714
-    >>> del G.node[1]['room'] # remove attribute
-    >>> G.nodes(data=True)
-    [(1, {'time': '5pm'}), (3, {'time': '2pm'})]
-
-    Warning: adding a node to G.node does not add it to the graph.
-
-    Add edge attributes using add_edge(), add_edges_from(), subscript
-    notation, or G.edge.
-
-    >>> G.add_edge(1, 2, weight=4.7 )
-    >>> G.add_edges_from([(3,4),(4,5)], color='red')
-    >>> G.add_edges_from([(1,2,{'color':'blue'}), (2,3,{'weight':8})])
-    >>> G[1][2]['weight'] = 4.7
-    >>> G.edge[1][2]['weight'] = 4
-
-    **Shortcuts:**
-
-    Many common graph features allow python syntax to speed reporting.
-
-    >>> 1 in G     # check if node in graph
-    True
-    >>> [n for n in G if n<3]   # iterate through nodes
-    [1, 2]
-    >>> len(G)  # number of nodes in graph
-    5
-    >>> G[1] # adjacency dict keyed by neighbor to edge attributes
-    ...            # Note: you should not change this dict manually!
-    {2: {'color': 'blue', 'weight': 4}}
-
-    The fastest way to traverse all edges of a graph is via
-    adjacency_iter(), but the edges() method is often more convenient.
-
-    >>> for n,nbrsdict in G.adjacency_iter():
-    ...     for nbr,eattr in nbrsdict.items():
-    ...        if 'weight' in eattr:
-    ...            (n,nbr,eattr['weight'])
-    (1, 2, 4)
-    (2, 1, 4)
-    (2, 3, 8)
-    (3, 2, 8)
-    >>> [ (u,v,edata['weight']) for u,v,edata in G.edges(data=True) if 'weight' in edata ]
-    [(1, 2, 4), (2, 3, 8)]
-
-    **Reporting:**
-
-    Simple graph information is obtained using methods.
-    Iterator versions of many reporting methods exist for efficiency.
-    Methods exist for reporting nodes(), edges(), neighbors() and degree()
-    as well as the number of nodes and edges.
-
-    For details on these and other miscellaneous methods, see below.
-    """
-
-    def __init__(self, data=None, **attr):
-        """Initialize a graph with edges, name, graph attributes.
-
-        Parameters
-        ----------
-        data : input graph
-            Data to initialize graph.  If data=None (default) an empty
-            graph is created.  The data can be an edge list, or any
-            NetworkX graph object.  If the corresponding optional Python
-            packages are installed the data can also be a NumPy matrix
-            or 2d ndarray, a SciPy sparse matrix, or a PyGraphviz graph.
-        name : string, optional (default='')
-            An optional name for the graph.
-        attr : keyword arguments, optional (default= no attributes)
-            Attributes to add to graph as key=value pairs.
-
-        See Also
-        --------
-        convert
-
-        Examples
-        --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
-        >>> G = nx.Graph(name='my graph')
-        >>> e = [(1,2),(2,3),(3,4)] # list of edges
-        >>> G = nx.Graph(e)
-
-        Arbitrary graph attribute pairs (key=value) may be assigned
-
-        >>> G=nx.Graph(e, day="Friday")
-        >>> G.graph
-        {'day': 'Friday'}
-
+    def __init__(self):
         """
-
+        Initialize a graph with edges, name, graph attributes.
+        """
         self.graph = {}  # dictionary for graph attributes
         self.node = {}  # empty node dict (created before convert)
         self.adj = {}  # empty adjacency dict
 
-        # attempt to load graph with data
-
-        if data is not None:
-            convert.to_networkx_graph(data, create_using=self)
-
-        # load graph attributes (must be after convert)
-
-        self.graph.update(attr)
         self.edge = self.adj
 
     @property
@@ -253,111 +61,39 @@ class Graph(object):
         self.graph['name'] = s
 
     def __str__(self):
-        """Return the graph name.
-
-        Returns
-        -------
-        name : string
-            The name of the graph.
-
-        Examples
-        --------
-        >>> G = nx.Graph(name='foo')
-        >>> str(G)
-        'foo'
         """
-
+        Return the graph name.
+        """
         return self.name
 
     def __iter__(self):
-        """Iterate over the nodes. Use the expression 'for n in G'.
-
-        Returns
-        -------
-        niter : iterator
-            An iterator over all nodes in the graph.
-
-        Examples
-        --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
-        >>> G.add_path([0,1,2,3])
         """
-
+        Iterate over the nodes. Use the expression 'for n in G'.
+        """
         return iter(self.node)
 
     def __contains__(self, n):
-        """Return True if n is a node, False otherwise. Use the expression
-        'n in G'.
-
-        Examples
-        --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
-        >>> G.add_path([0,1,2,3])
-        >>> 1 in G
-        True
         """
-
+        Return True if n is a node, False otherwise. Use the expression
+        """
         try:
             return n in self.node
         except TypeError:
             return False
 
     def __len__(self):
-        """Return the number of nodes. Use the expression 'len(G)'.
-
-        Returns
-        -------
-        nnodes : int
-            The number of nodes in the graph.
-
-        Examples
-        --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
-        >>> G.add_path([0,1,2,3])
-        >>> len(G)
-        4
-
         """
-
+        Return the number of nodes. Use the expression 'len(G)'.
+        """
         return len(self.node)
 
     def __getitem__(self, n):
-        """Return a dict of neighbors of node n.  Use the expression 'G[n]'.
-
-        Parameters
-        ----------
-        n : node
-           A node in the graph.
-
-        Returns
-        -------
-        adj_dict : dictionary
-           The adjacency dictionary for nodes connected to n.
-
-        Notes
-        -----
-        G[n] is similar to G.neighbors(n) but the internal data dictionary
-        is returned instead of a list.
-
-        Assigning G[n] will corrupt the internal graph data structure.
-        Use G[n] for reading data only.
-
-        Examples
-        --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
-        >>> G.add_path([0,1,2,3])
-        >>> G[0]
-        {1: {}}
         """
-
+        Return a dict of neighbors of node n.  Use the expression 'G[n]'.
+        """
         return self.adj[n]
 
-    def add_node(
-        self,
-        n,
-        attr_dict=None,
-        **attr
-        ):
+    def add_node(self, n, attr_dict=None, **attr):
         """Add a single node n and update node attributes.
 
         Parameters
@@ -370,36 +106,9 @@ class Graph(object):
         attr : keyword arguments, optional
             Set or change attributes using key=value.
 
-        See Also
-        --------
-        add_nodes_from
-
-        Examples
-        --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
-        >>> G.add_node(1)
-        >>> G.add_node('Hello')
-        >>> K3 = nx.Graph([(0,1),(1,2),(2,0)])
-        >>> G.add_node(K3)
-        >>> G.number_of_nodes()
-        3
-
-        Use keywords set/change node attributes:
-
         >>> G.add_node(1,size=10)
         >>> G.add_node(3,weight=0.4,UTM=('13S',382871,3972649))
-
-        Notes
-        -----
-        A hashable object is one that can be used as a key in a Python
-        dictionary. This includes strings, numbers, tuples of strings
-        and numbers, etc.
-
-        On many platforms hashable items also include mutables such as
-        NetworkX Graphs, though one should be careful that the hash
-        doesn't change on mutables.
         """
-
         # set up attribute dict
 
         if attr_dict is None:
@@ -408,15 +117,12 @@ class Graph(object):
             try:
                 attr_dict.update(attr)
             except AttributeError:
-                raise NetworkXError('The attr_dict argument must be a dictionary.'
-                                    )
+                raise NetworkXError('The attr_dict argument must be a dictionary.')
         if n not in self.node:
             self.adj[n] = {}
             self.node[n] = attr_dict
         else:
-
-              # update attr even if node already exists
-
+            # update attr even if node already exists
             self.node[n].update(attr_dict)
 
     def add_nodes_from(self, nodes, **attr):
@@ -2110,7 +1816,7 @@ class DiGraph(Graph):
     For details on these and other miscellaneous methods, see below.
     """
 
-    def __init__(self, data=None, **attr):
+    def __init__(self):
         """Initialize a graph with edges, name, graph attributes.
 
         Parameters
@@ -2155,15 +1861,6 @@ class DiGraph(Graph):
         self.adj = {}  # empty adjacency dictionary
         self.pred = {}  # predecessor
         self.succ = self.adj  # successor
-
-        # attempt to load graph with data
-
-        if data is not None:
-            convert.to_networkx_graph(data, create_using=self)
-
-        # load graph attributes (must be after convert)
-
-        self.graph.update(attr)
         self.edge = self.adj
 
     def add_node(
@@ -3306,40 +3003,31 @@ class GVMAnalysis(object):
         self.G = DiGraph()
         self.GI = DiGraph()
 
-        for j in \
-            self.vmx.tainted_packages.get_internal_packages():
-            (src_class_name, src_method_name, src_descriptor) = \
-                j.get_src(self.vm.get_class_manager())
-            (dst_class_name, dst_method_name, dst_descriptor) = \
-                j.get_dst(self.vm.get_class_manager())
+        for j in self.vmx.tainted_packages.get_internal_packages():
+            (src_class_name, src_method_name, src_descriptor) = j.get_src(self.vm.get_class_manager())
+            (dst_class_name, dst_method_name, dst_descriptor) = j.get_dst(self.vm.get_class_manager())
 
-            n1 = self._get_node(src_class_name, src_method_name,
-                                src_descriptor)
-            n2 = self._get_node(dst_class_name, dst_method_name,
-                                dst_descriptor)
+            n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
+            n2 = self._get_node(dst_class_name, dst_method_name, dst_descriptor)
 
             self.G.add_edge(n1.id, n2.id)
             n1.add_edge(n2, j)
 
-        internal_new_packages = \
-            self.vmx.tainted_packages.get_internal_new_packages()
+        internal_new_packages = self.vmx.tainted_packages.get_internal_new_packages()
         for j in internal_new_packages:
             for path in internal_new_packages[j]:
-                (src_class_name, src_method_name, src_descriptor) = \
-                    path.get_src(self.vm.get_class_manager())
+                (src_class_name, src_method_name, src_descriptor) = path.get_src(self.vm.get_class_manager())
 
-                n1 = self._get_node(src_class_name, src_method_name,
-                                    src_descriptor)
+                n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
                 n2 = self._get_node(j, '', '')
                 self.GI.add_edge(n2.id, n1.id)
                 n1.add_edge(n2, path)
 
-        if apk != None:
+        if apk is not None:
             for i in apk.get_activities():
                 j = bytecode.FormatClassToJava(i)
-                n1 = self._get_exist_node(j, 'onCreate',
-                        '(Landroid/os/Bundle;)V')
-                if n1 != None:
+                n1 = self._get_exist_node(j, 'onCreate', '(Landroid/os/Bundle;)V')
+                if n1 is not None:
                     n1.set_attributes({'type': 'activity'})
                     n1.set_attributes({'color': ACTIVITY_COLOR})
                     n2 = self._get_new_node_from(n1, 'ACTIVITY')
@@ -3349,7 +3037,7 @@ class GVMAnalysis(object):
             for i in apk.get_services():
                 j = bytecode.FormatClassToJava(i)
                 n1 = self._get_exist_node(j, 'onCreate', '()V')
-                if n1 != None:
+                if n1 is not None:
                     n1.set_attributes({'type': 'service'})
                     n1.set_attributes({'color': SERVICE_COLOR})
                     n2 = self._get_new_node_from(n1, 'SERVICE')
@@ -3361,7 +3049,7 @@ class GVMAnalysis(object):
                 n1 = self._get_exist_node(j, 'onReceive',
                         '(Landroid/content/Context; Landroid/content/Intent;)V'
                         )
-                if n1 != None:
+                if n1 is not None:
                     n1.set_attributes({'type': 'receiver'})
                     n1.set_attributes({'color': RECEIVER_COLOR})
                     n2 = self._get_new_node_from(n1, 'RECEIVER')
@@ -3436,7 +3124,7 @@ class GVMAnalysis(object):
                 n1 = self._get_exist_node(dst_class_name,
                         dst_method_name, dst_descriptor)
 
-                if n1 == None:
+                if n1 is None:
                     continue
 
                 n1.set_attributes({'permissions': 1})
@@ -3495,21 +3183,14 @@ class GVMAnalysis(object):
         except KeyError:
             return None
 
-    def _get_node(
-        self,
-        class_name,
-        method_name,
-        descriptor,
-        ):
+    def _get_node(self, class_name, method_name, descriptor):
         if method_name == '' and descriptor == '':
             key = class_name
         else:
             key = '%s %s %s' % (class_name, method_name, descriptor)
         if key not in self.nodes:
-            self.nodes[key] = NodeF(len(self.nodes), class_name,
-                                    method_name, descriptor)
+            self.nodes[key] = NodeF(len(self.nodes), class_name, method_name, descriptor)
             self.nodes_id[self.nodes[key].id] = self.nodes[key]
-
         return self.nodes[key]
 
     def _get_new_node_from(self, n, label):
@@ -3654,15 +3335,7 @@ COLOR_PERMISSIONS_LEVEL = {
 
 class NodeF(object):
 
-    def __init__(
-        self,
-        id,
-        class_name,
-        method_name,
-        descriptor,
-        label=None,
-        real=True,
-        ):
+    def __init__(self, id, class_name, method_name, descriptor, label=None, real=True,):
         self.class_name = class_name
         self.method_name = method_name
         self.descriptor = descriptor
@@ -3673,7 +3346,7 @@ class NodeF(object):
         self.api = {}
         self.edges = {}
 
-        if label == None:
+        if label is None:
             self.label = '%s %s %s' % (class_name, method_name,
                     descriptor)
         else:
@@ -3698,7 +3371,7 @@ class NodeF(object):
     def get_attributes_gexf(self):
         buff = ''
 
-        if self.attributes['color'] != None:
+        if self.attributes['color'] is not None:
             buff += '<viz:color r="%d" g="%d" b="%d"/>\n' \
                 % (self.attributes['color'][0], self.attributes['color'
                    ][1], self.attributes['color'][2])
@@ -3742,7 +3415,7 @@ class NodeF(object):
 
         buff += '<y:Geometry height="%f" width="%f"/>\n' % (16
                 * height, 8 * width)
-        if self.attributes['color'] != None:
+        if self.attributes['color'] is not None:
             buff += \
                 '<y:Fill color="#%02x%02x%02x" transparent="false"/>\n' \
                 % (self.attributes['color'][0], self.attributes['color'

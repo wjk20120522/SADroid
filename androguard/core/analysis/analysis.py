@@ -191,7 +191,6 @@ class DVMBasicBlock(object):
         self.special_ins = {}
 
         self.name = '%s-BB@0x%x' % (self.method.get_name(), self.start)
-        print self.name
 
         self.exception_analysis = None
 
@@ -1650,12 +1649,11 @@ class MethodAnalysis(object):
         for i in instructions:
 
             for j in BO['BasicOPCODES_H']:
-                if j.match(i.get_name()) != None:
+                if j.match(i.get_name()) is not None:
                     v = BO['Dnext'](i, idx, self.method)
                     h[idx] = v
                     l.extend(v)
                     break
-
             idx += i.get_length()
 
         debug('Parsing exceptions')
@@ -1673,9 +1671,8 @@ class MethodAnalysis(object):
 
             if idx in l:
                 if current_basic.get_nb_instructions() != 0:
-                    current_basic = BO['BasicClass'
-                            ](current_basic.get_end(), self.__vm,
-                              self.method, self.basic_blocks)
+                    current_basic = BO['BasicClass'](current_basic.get_end(),
+                        self.__vm, self.method, self.basic_blocks)
                     self.basic_blocks.push(current_basic)
 
             current_basic.push(i)
