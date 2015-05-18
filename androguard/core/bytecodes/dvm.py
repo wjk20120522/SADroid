@@ -171,7 +171,6 @@ def static_operand_instruction(instruction):
     if isinstance(instruction, Instruction):
 
       # get instructions without registers
-
         for val in instruction.get_literals():
             buff += '%s' % val
 
@@ -330,8 +329,14 @@ def writesleb128(value):
 
     return buff
 
-
 def determineNext(i, end, m):
+    """
+    :param i:   instruction
+    :param end: idx
+    :param m:   EncodedMethod
+    :return:    list of instruction
+    """
+
     op_value = i.get_op_value()
 
     # throw + return*
@@ -339,31 +344,23 @@ def determineNext(i, end, m):
     if op_value == 0x27 or 0x0e <= op_value <= 0x11:
         return [-1]
     elif 0x28 <= op_value <= 0x2a:
-
     # goto
-
         off = i.get_ref_off() * 2
         return [off + end]
     elif 0x32 <= op_value <= 0x3d:
-
     # if
-
         off = i.get_ref_off() * 2
         return [end + i.get_length(), off + end]
     elif op_value in (0x2b, 0x2c):
-
     # sparse/packed
-
-        x = []
-
-        x.append(end + i.get_length())
+        x = [end + i.get_length()]
 
         code = m.get_code().get_bc()
         off = i.get_ref_off() * 2
 
         data = code.get_ins_off(off + end)
 
-        if data != None:
+        if data is not None:
             for target in data.get_targets():
                 x.append(target * 2 + end)
 
@@ -7901,12 +7898,8 @@ class DalvikVMFormat(bytecode._Bytecode):
 
     """
         This class can parse a classes.dex file of an Android application (APK).
-
         :param buff: a string which represents the classes.dex file
-        :param decompiler: associate a decompiler object to display the java source code
         :type buff: string
-        :type decompiler: object
-
         :Example:
           DalvikVMFormat( read("classes.dex") )
     """

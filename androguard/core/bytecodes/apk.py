@@ -159,14 +159,7 @@ class APK(object):
           APK(read("myfile.apk"), raw=True)
     """
 
-    def __init__(
-        self,
-        filename,
-        raw=False,
-        mode='r',
-        magic_file=None,
-        zipmodule=ZIPMODULE,
-        ):
+    def __init__(self, filename, raw=False, mode='r', magic_file=None, zipmodule=ZIPMODULE):
 
         self.filename = filename
 
@@ -218,7 +211,8 @@ class APK(object):
                     if not os.path.exists('output'):
                         os.mkdir('output')
             # may handle other xml files
-        self.get_files_types()
+
+        # self.get_files_types()
 
     def get_AndroidManifest(self):
         """

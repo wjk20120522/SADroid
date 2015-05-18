@@ -195,22 +195,16 @@ def random_string():
 
 
 def is_android(filename):
-    """Return the type of the file
-
+    """ Return the type of the file
         @param filename : the filename
         @rtype : "APK", "DEX", "ELF", None
     """
-
     if not filename:
         return None
-
-    val = None
     with open(filename, 'r') as fd:
         f_bytes = fd.read(7)
         val = is_android_raw(f_bytes)
-
     return val
-
 
 def is_android_raw(raw):
     val = None

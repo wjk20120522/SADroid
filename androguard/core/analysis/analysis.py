@@ -169,7 +169,6 @@ DVM_FIELDS_ACCESS = {
 
 
 class DVMBasicBlock(object):
-
     """
         A simple basic block of a dalvik method
     """
@@ -214,14 +213,13 @@ class DVMBasicBlock(object):
     def get_instructions(self):
         """
         Get all instructions from a basic block.
-
         :rtype: Return all instructions in the current basic block
       """
 
         tmp_ins = []
         idx = 0
         for i in self.method.get_instructions():
-            if idx >= self.start and idx < self.end:
+            if  self.start <= idx < self.end:
                 tmp_ins.append(i)
 
             idx += i.get_length()
@@ -248,7 +246,6 @@ class DVMBasicBlock(object):
     def get_next(self):
         """
             Get next basic blocks
-
             :rtype: a list of the next basic blocks
         """
 
@@ -257,7 +254,6 @@ class DVMBasicBlock(object):
     def get_prev(self):
         """
             Get previous basic blocks
-
             :rtype: a list of the previous basic blocks
         """
 
@@ -273,22 +269,22 @@ class DVMBasicBlock(object):
 
         # print self, self.start, self.end, values
 
-        if values == []:
+        if values is []:
             next_block = self.context.get_basic_block(self.end + 1)
-            if next_block != None:
+            if next_block is not None:
                 self.childs.append((self.end - self.get_last_length(),
                                    self.end, next_block))
         else:
             for i in values:
                 if i != -1:
                     next_block = self.context.get_basic_block(i)
-                    if next_block != None:
+                    if next_block is not None:
                         self.childs.append((self.end
                                 - self.get_last_length(), i,
                                 next_block))
 
         for c in self.childs:
-            if c[2] != None:
+            if c[2] is not None:
                 c[2].set_fathers((c[1], c[0], self))
 
     def push(self, i):
@@ -302,43 +298,38 @@ class DVMBasicBlock(object):
 
             # field access
 
-            if op_value >= 0x52 and op_value <= 0x6d:
+            if 0x52 <= op_value <= 0x6d:
                 desc = self.__vm.get_cm_field(i.get_ref_kind())
-                if self.tainted_variables != None:
+                if self.tainted_variables is not None:
                     self.tainted_variables.push_info(TAINTED_FIELD,
                             desc, DVM_FIELDS_ACCESS[i.get_name()][0],
                             idx, self.method)
-            elif op_value >= 0x6e and op_value <= 0x72 or op_value \
-                >= 0x74 and op_value <= 0x78:
+            elif 0x6e <= op_value <= 0x72 or 0x74 <= op_value <= 0x78:
 
             # invoke
-
                 idx_meth = i.get_ref_kind()
                 method_info = self.__vm.get_cm_method(idx_meth)
-                if self.tainted_packages != None:
-                    self.tainted_packages.push_info(method_info[0],
-                            TAINTED_PACKAGE_CALL, idx, self.method,
-                            idx_meth)
+                if self.tainted_packages is not None:
+                    self.tainted_packages.push_info(method_info[0], TAINTED_PACKAGE_CALL, idx, self.method, idx_meth)
             elif op_value == 0x22:
 
             # new_instance
 
                 idx_type = i.get_ref_kind()
                 type_info = self.__vm.get_cm_type(idx_type)
-                if self.tainted_packages != None:
+                if self.tainted_packages is not None:
                     self.tainted_packages.push_info(type_info,
                             TAINTED_PACKAGE_CREATE, idx, self.method,
                             None)
-            elif op_value >= 0x1a and op_value <= 0x1b:
+            elif 0x1a <= op_value <= 0x1b:
 
             # const-string
 
                 string_name = self.__vm.get_cm_string(i.get_ref_kind())
-                if self.tainted_variables != None:
+                if self.tainted_variables is not None:
                     self.tainted_variables.push_info(TAINTED_STRING,
                             string_name, 'R', idx, self.method)
-            elif op_value == 0x26 or op_value >= 0x2b and op_value \
-                <= 0x2c:
+            elif op_value == 0x26 or 0x2b <=op_value <= 0x2c:
 
                 code = self.method.get_code().get_bc()
                 self.special_ins[idx] = code.get_ins_off(idx
@@ -438,7 +429,7 @@ class TaintedVariable(object):
                         yield (i, j, k, v)
 
     def get_paths(self):
-        if self.__cache != []:
+        if self.__cache is not []:
             return self.__cache
 
         for i in self.paths:
@@ -483,7 +474,8 @@ class TaintedVariables(object):
         except KeyError:
             return None
 
-    def toPathVariable(self, obj):
+    @staticmethod
+    def toPathVariable(obj):
         z = []
         for i in obj.get_paths():
             (access, idx) = i[0]
@@ -519,7 +511,7 @@ class TaintedVariables(object):
         permissions = {}
 
         pn = permissions_needed
-        if permissions_needed == []:
+        if permissions_needed is []:
             pn = DVM_PERMISSIONS_BY_PERMISSION.keys()
 
         for (f, f1) in self.get_fields():
@@ -791,7 +783,6 @@ class TaintedPackage(object):
         """
             @param name : a regexp for the name of the method
             @param descriptor : a regexp for the descriptor of the method
-
             @rtype : a list of called paths
         """
 
@@ -803,8 +794,8 @@ class TaintedPackage(object):
             (_, dst_name, dst_descriptor) = \
                 path.get_dst(self.vm.get_class_manager())
 
-            if m_name.match(dst_name) != None \
-                and m_descriptor.match(dst_descriptor) != None:
+            if m_name.match(dst_name) is not None \
+                and m_descriptor.match(dst_descriptor) is not None:
                 l.append(path)
         return l
 
@@ -1149,7 +1140,7 @@ class TaintedPackages(object):
 
         l = []
         for (m, _) in self.get_packages():
-            if ex.search(m.get_name()) != None:
+            if ex.search(m.get_name()) is not None:
                 l.extend(m.get_methods())
         return l
 
@@ -1174,7 +1165,7 @@ class TaintedPackages(object):
                         l.append([path.get_class_name(),
                                  path.get_name(),
                                  path.get_descriptor()])
-        return (l, d)
+        return l, d
 
     def search_methods(
         self,
@@ -1192,7 +1183,7 @@ class TaintedPackages(object):
         """
 
         l = []
-        if re_expr == True:
+        if re_expr is True:
             ex = re.compile(class_name)
 
             for (m, _) in self.get_packages():
@@ -1212,7 +1203,7 @@ class TaintedPackages(object):
         l = []
 
         for (m, _) in self.get_packages():
-            if ex.search(m.get_name()) != None:
+            if ex.search(m.get_name()) is not None:
                 l.extend(m.get_objects_paths())
 
         return l
@@ -1238,12 +1229,7 @@ class TaintedPackages(object):
 
         return self.search_packages('Landroid/net/')
 
-    def get_method(
-        self,
-        class_name,
-        name,
-        descriptor,
-        ):
+    def get_method(self, class_name, name, descriptor):
         try:
             return self.__packages[class_name].get_method(name,
                     descriptor)
@@ -1263,8 +1249,7 @@ class TaintedPackages(object):
                         data = '%s-%s-%s' % (m.get_info(),
                                 j.get_name(), tmp)
                         if data in DVM_PERMISSIONS_BY_ELEMENT:
-                            if DVM_PERMISSIONS_BY_ELEMENT[data] \
-                                not in permissions:
+                            if DVM_PERMISSIONS_BY_ELEMENT[data] not in permissions:
                                 permissions.append(DVM_PERMISSIONS_BY_ELEMENT[data])
         return permissions
 
@@ -1277,7 +1262,7 @@ class TaintedPackages(object):
         permissions = {}
 
         pn = permissions_needed
-        if permissions_needed == []:
+        if permissions_needed is []:
             pn = DVM_PERMISSIONS_BY_PERMISSION.keys()
 
         classes = self.__vm.get_classes_names()
@@ -1305,8 +1290,7 @@ class TaintedPackages(object):
                                 try:
                                     permissions[DVM_PERMISSIONS_BY_ELEMENT[data]].append(j)
                                 except KeyError:
-                                    permissions[DVM_PERMISSIONS_BY_ELEMENT[data]] = \
-    []
+                                    permissions[DVM_PERMISSIONS_BY_ELEMENT[data]] = []
                                     permissions[DVM_PERMISSIONS_BY_ELEMENT[data]].append(j)
 
         return permissions
@@ -1424,8 +1408,7 @@ class Tags(object):
       :params reverse:
   """
 
-    def __init__(self, patterns=TAGS_ANDROID,
-                 reverse=TAG_REVERSE_ANDROID):
+    def __init__(self, patterns=TAGS_ANDROID, reverse=TAG_REVERSE_ANDROID):
         self.tags = set()
 
         self.patterns = patterns
@@ -1437,14 +1420,13 @@ class Tags(object):
     def emit(self, method):
         for i in self.patterns:
             if self.patterns[i][0] == 0:
-                if self.patterns[i][1].search(method.get_class()) \
-                    != None:
+                if self.patterns[i][1].search(method.get_class()) is not None:
                     self.tags.add(i)
 
     def emit_by_classname(self, classname):
         for i in self.patterns:
             if self.patterns[i][0] == 0:
-                if self.patterns[i][1].search(classname) != None:
+                if self.patterns[i][1].search(classname) is not None:
                     self.tags.add(i)
 
     def get_list(self):
@@ -1480,7 +1462,7 @@ class BasicBlocks(object):
 
     def get_basic_block(self, idx):
         for i in self.bb:
-            if idx >= i.get_start() and idx < i.get_end():
+            if i.get_start() <= idx < i.get_end():
                 return i
         return None
 
@@ -1536,7 +1518,7 @@ class ExceptionAnalysis(object):
         buff = '%x:%x\n' % (self.start, self.end)
 
         for i in self.exceptions:
-            if i[2] == None:
+            if i[2] is None:
                 buff += '\t(%s -> %x %s)\n' % (i[0], i[1], i[2])
             else:
                 buff += '\t(%s -> %x %s)\n' % (i[0], i[1],
@@ -1663,17 +1645,14 @@ class MethodAnalysis(object):
                     current_basic = BO['BasicClass'](current_basic.get_end(),
                         self.__vm, self.method, self.basic_blocks)
                     self.basic_blocks.push(current_basic)
-
             current_basic.push(i)
 
             # index is a branch instruction
 
             if idx in h:
-                current_basic = BO['BasicClass'
-                                   ](current_basic.get_end(),
+                current_basic = BO['BasicClass'](current_basic.get_end(),
                         self.__vm, self.method, self.basic_blocks)
                 self.basic_blocks.push(current_basic)
-
             idx += i.get_length()
 
         if current_basic.get_nb_instructions() == 0:
@@ -1696,7 +1675,6 @@ class MethodAnalysis(object):
         for i in self.basic_blocks.get():
 
             # setup exception by basic block
-
             i.set_exception_analysis(self.exceptions.get_exception(i.start,
                     i.end - 1))
 

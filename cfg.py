@@ -44,7 +44,6 @@ def main(options):
         print 'After all job of a application is done, the time is'
         print time.strftime("%H:%M:%S", time.localtime())
 
-
 if __name__ == '__main__':
     # just test the cost time of each application
     import time

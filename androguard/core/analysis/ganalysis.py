@@ -1336,12 +1336,7 @@ class GVMAnalysis(object):
                         n1.add_risk('DEXCLASSLOADER')
 
 
-    def _get_exist_node(
-        self,
-        class_name,
-        method_name,
-        descriptor,
-        ):
+    def _get_exist_node(self, class_name, method_name, descriptor):
         key = '%s %s %s' % (class_name, method_name, descriptor)
         try:
             return self.nodes[key]
@@ -1359,8 +1354,7 @@ class GVMAnalysis(object):
         return self.nodes[key]
 
     def _get_new_node_from(self, n, label):
-        return self._get_new_node(n.class_name, n.method_name,
-                                  n.descriptor + label, label)
+        return self._get_new_node(n.class_name, n.method_name, n.descriptor + label, label)
 
     def _get_new_node(
         self,
