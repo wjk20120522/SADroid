@@ -40,7 +40,7 @@ NS_ANDROID_URI = 'http://schemas.android.com/apk/res/android'
 class APK(object):
     """
         This class can access to all elements in an APK file
-        :param filename: specify the path of the file, or raw data
+        :param filename: specify the path of the file
         :type filename: string
     """
 
@@ -50,7 +50,6 @@ class APK(object):
 
         self.xml = {}
         self.axml = {}
-        self.arsc = {}
 
         self.package = ''
         self.androidversion = {}
@@ -58,7 +57,6 @@ class APK(object):
         self.valid_apk = False
 
         self.files = {}
-        self.files_crc32 = {}
 
         self.__raw = read(filename)
 
@@ -83,158 +81,48 @@ class APK(object):
 
                     if not os.path.exists('output'):
                         os.mkdir('output')
-                    print i.find(".xml")
-            # elif i.find(".xml") != -1:
-            #     print i.find(".xml")
-            #     print i
-            #     self.axml[i] = AXMLPrinter(self.zip.read(i))
-            #     self.xml[i] = minidom.parseString(self.axml[i].get_buff())
-            #
-            #     exit()
-            # may handle other xml files
-
-        # self.get_files_types()
 
     def get_AndroidManifest(self):
         """
             Return the Android Manifest XML file
-
             :rtype: xml object
         """
-
         return self.xml['AndroidManifest.xml']
 
     def is_valid_APK(self):
         """
             Return true if the APK is valid, false otherwise
-
             :rtype: boolean
         """
-
         return self.valid_apk
-
-    def get_filename(self):
-        """
-            Return the filename of the APK
-
-            :rtype: string
-        """
-
-        return self.filename
 
     def get_package(self):
         """
             Return the name of the package
-
             :rtype: string
         """
-
         return self.package
 
     def get_androidversion_code(self):
         """
             Return the android version code
-
             :rtype: string
         """
-
         return self.androidversion['Code']
 
     def get_androidversion_name(self):
         """
             Return the android version name
-
             :rtype: string
         """
-
         return self.androidversion['Name']
 
     def get_files(self):
         """
             Return the files inside the APK
-
             :rtype: a list of strings
         """
-
         return self.zip.namelist()
-
-    def get_files_types(self):
-        """
-            Return the files inside the APK with their associated types (by using python-magic)
-
-            :rtype: a dictionnary
-        """
-        try:
-            import magic
-        except ImportError:
-            # no lib magic !
-            for i in self.get_files():
-                buff = self.zip.read(i)
-                self.files_crc32[i] = crc32(buff)
-                self.files[i] = 'Unknown'
-            return self.files
-
-        if self.files != {}:
-            return self.files
-
-        builtin_magic = 0x0000
-        try:
-            getattr(magic, 'MagicException')
-        except AttributeError:
-            builtin_magic = 0x0001
-
-        if builtin_magic:
-            ms = magic.open(magic.MAGIC_NONE)
-            ms.load()
-
-            for i in self.get_files():
-                buff = self.zip.read(i)
-                self.files[i] = ms.buffer(buff)
-                self.files[i] = self._patch_magic(buff, self.files[i])
-                self.files_crc32[i] = crc32(buff)
-        else:
-            m = magic.Magic(self.magic_file)
-            for i in self.get_files():
-                buff = self.zip.read(i)
-                self.files[i] = m.from_buffer(buff)
-                self.files[i] = self._patch_magic(buff, self.files[i])
-                self.files_crc32[i] = crc32(buff)
-
-        return self.files
-
-    @staticmethod
-    def _patch_magic(buff, orig):
-        if 'Zip' in orig or 'DBase' in orig:
-            val = androconf.is_android_raw(buff)
-            if val == 'APK':
-                if androconf.is_valid_android_raw(buff):
-                    return 'Android application package file'
-            elif val == 'AXML':
-                return "Android's binary XML"
-
-        return orig
-
-    def get_files_crc32(self):
-        if self.files_crc32 == {}:
-            self.get_files_types()
-
-        return self.files_crc32
-
-    def get_files_information(self):
-        """
-            Return the files inside the APK with their associated types and crc32
-
-            :rtype: string, string, int
-        """
-
-        if self.files == {}:
-            self.get_files_types()
-
-        for i in self.get_files():
-            try:
-                yield (i, self.files[i], self.files_crc32[i])
-            except KeyError:
-                yield (i, '', '')
 
     def get_raw(self):
         """
@@ -242,16 +130,13 @@ class APK(object):
 
             :rtype: string
         """
-
         return self.__raw
 
     def get_file(self, filename):
         """
             Return the raw data of the specified filename
-
             :rtype: string
         """
-
         try:
             return self.zip.read(filename)
         except KeyError:
