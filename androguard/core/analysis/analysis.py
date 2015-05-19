@@ -87,7 +87,7 @@ class ToString(object):
     def push(self, name):
         for i in self.__tab:
             for j in self.__re_tab[i]:
-                if j.match(name) != None:
+                if j.match(name) is not None:
                     if len(self.__string) > 0:
                         if i == 'O' and self.__string[-1] == 'O':
                             continue

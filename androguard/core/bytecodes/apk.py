@@ -34,132 +34,17 @@ from xml.dom import minidom
 
 NS_ANDROID_URI = 'http://schemas.android.com/apk/res/android'
 
-# 0: chilkat
-# 1: default python zipfile module
-# 2: patch zipfile module
-
-ZIPMODULE = 0x0001
-
-import sys
-if sys.hexversion < 0x2070000:
-    try:
-        import chilkat
-        ZIPMODULE = 0x0000
-
-        # UNLOCK : change it with your valid key !
-
-        try:
-            CHILKAT_KEY = read('key.txt')
-        except Exception:
-            CHILKAT_KEY = 'testme'
-    except ImportError:
-
-        ZIPMODULE = 0x0001
-else:
-    ZIPMODULE = 0x0001
-
-
-################################################### CHILKAT ZIP FORMAT #####################################################
-
-class ChilkatZip(object):
-
-    def __init__(self, raw):
-        self.files = []
-        self.zip = chilkat.CkZip()
-
-        self.zip.UnlockComponent(CHILKAT_KEY)
-
-        self.zip.OpenFromMemory(raw, len(raw))
-
-        filename = chilkat.CkString()
-        e = self.zip.FirstEntry()
-        while e != None:
-            e.get_FileName(filename)
-            self.files.append(filename.getString())
-            e = e.NextEntry()
-
-    def delete(self, patterns):
-        el = []
-
-        filename = chilkat.CkString()
-        e = self.zip.FirstEntry()
-        while e != None:
-            e.get_FileName(filename)
-
-            if re.match(patterns, filename.getString()) != None:
-                el.append(e)
-            e = e.NextEntry()
-
-        for i in el:
-            self.zip.DeleteEntry(i)
-
-    def remplace_file(self, filename, buff):
-        entry = self.zip.GetEntryByName(filename)
-        if entry != None:
-            obj = chilkat.CkByteData()
-            obj.append2(buff, len(buff))
-            return entry.ReplaceData(obj)
-        return False
-
-    def write(self):
-        obj = chilkat.CkByteData()
-        self.zip.WriteToMemory(obj)
-        return obj.getBytes()
-
-    def namelist(self):
-        return self.files
-
-    def read(self, elem):
-        e = self.zip.GetEntryByName(elem)
-        s = chilkat.CkByteData()
-
-        e.Inflate(s)
-        return s.getBytes()
-
-
-def sign_apk(filename, keystore, storepass):
-    from subprocess import Popen, PIPE, STDOUT
-    compile = Popen([
-        androconf.CONF['PATH_JARSIGNER'],
-        '-sigalg',
-        'MD5withRSA',
-        '-digestalg',
-        'SHA1',
-        '-storepass',
-        storepass,
-        '-keystore',
-        keystore,
-        filename,
-        'alias_name',
-        ], PIPE, STDOUT)
-    (stdout, stderr) = compile.communicate()
-
 
 ######################################################## APK FORMAT ########################################################
 
 class APK(object):
-
     """
         This class can access to all elements in an APK file
-
         :param filename: specify the path of the file, or raw data
-        :param raw: specify if the filename is a path or raw data (optional)
-        :param mode: specify the mode to open the file (optional)
-        :param magic_file: specify the magic file (optional)
-        :param zipmodule: specify the type of zip module to use (0:chilkat, 1:zipfile, 2:patch zipfile)
-
         :type filename: string
-        :type raw: boolean
-        :type mode: string
-        :type magic_file: string
-        :type zipmodule: int
-
-        :Example:
-          APK("myfile.apk")
-          APK(read("myfile.apk"), raw=True)
     """
 
-    def __init__(self, filename, raw=False, mode='r', magic_file=None, zipmodule=ZIPMODULE):
+    def __init__(self, filename):
 
         self.filename = filename
 
@@ -175,22 +60,10 @@ class APK(object):
         self.files = {}
         self.files_crc32 = {}
 
-        self.magic_file = magic_file
+        self.__raw = read(filename)
 
-        if raw:
-            self.__raw = filename
-        else:
-            self.__raw = read(filename)
-
-        self.zipmodule = zipmodule
-        if zipmodule == 0x0000:
-            self.zip = ChilkatZip(self.__raw)
-        elif zipmodule == 0x0002:
-            from androguard.patch import zipfile
-            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw), mode)
-        else:
-            import zipfile
-            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw), mode)
+        import zipfile
+        self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw))
 
         for i in self.zip.namelist():
             if i == 'AndroidManifest.xml':
@@ -210,6 +83,14 @@ class APK(object):
 
                     if not os.path.exists('output'):
                         os.mkdir('output')
+                    print i.find(".xml")
+            # elif i.find(".xml") != -1:
+            #     print i.find(".xml")
+            #     print i
+            #     self.axml[i] = AXMLPrinter(self.zip.read(i))
+            #     self.xml[i] = minidom.parseString(self.axml[i].get_buff())
+            #
+            #     exit()
             # may handle other xml files
 
         # self.get_files_types()

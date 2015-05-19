@@ -43,15 +43,12 @@ __author__ = """\n""".join(['Aric Hagberg (hagberg@lanl.gov)',
 class Graph(object):
 
     def __init__(self):
-        print 'will it be call?'
-        exit()
         """
         Initialize a graph with edges, name, graph attributes.
         """
         self.graph = {}  # dictionary for graph attributes
         self.node = {}  # empty node dict (created before convert)
         self.adj = {}  # empty adjacency dict
-
         self.edge = self.adj
 
     @property
@@ -185,7 +182,7 @@ class Graph(object):
         Return a list of the nodes in the graph.
         """
 
-        return list(self.nodes_iter(data=data))
+        return list(self.nodes_iter(data))
 
     def number_of_nodes(self):
         """
@@ -631,6 +628,8 @@ from copy import deepcopy
 class DiGraph(Graph):
 
     def __init__(self):
+
+        Graph.__init__(self)
         """
         Initialize a graph with edges, name, graph attributes.
         """

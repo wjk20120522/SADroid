@@ -18,22 +18,13 @@ options_io = [option_0, option_1]
 
 def main(options):
     if options.input is not None and options.output is not None:
-        ret_type = androconf.is_android(options.input)
         vm = None
-        a = None
-        if ret_type == 'APK':
-            a = apk.APK(options.input)
-            if a.is_valid_APK():
-                vm = dvm.DalvikVMFormat(a.get_dex())
-            else:
-                print 'INVALID APK'
-                exit()
-        elif ret_type == 'DEX':
-            try:
-                vm = dvm.DalvikVMFormat(read(options.input))
-            except Exception, e:
-                print 'INVALID DEX', e
-                exit()
+        a = apk.APK(options.input)
+        if a.is_valid_APK():
+            vm = dvm.DalvikVMFormat(a.get_dex())
+        else:
+            print 'INVALID APK'
+            exit()
 
         vmx = analysis.VMAnalysis(vm)
         gvmx = ganalysis.GVMAnalysis(vmx, a)
