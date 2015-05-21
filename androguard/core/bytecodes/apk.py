@@ -56,8 +56,6 @@ class APK(object):
         self.permissions = []
         self.valid_apk = False
 
-        self.files = {}
-
         self.__raw = read(filename)
 
         import zipfile
@@ -73,10 +71,8 @@ class APK(object):
                         self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI, 'versionCode')
                     self.androidversion['Name'] = \
                         self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI, 'versionName')
-
                     for item in self.xml[i].getElementsByTagName('uses-permission'):
                         self.permissions.append(str(item.getAttributeNS(NS_ANDROID_URI, 'name')))
-
                     self.valid_apk = True
 
                     if not os.path.exists('output'):
@@ -117,20 +113,18 @@ class APK(object):
         """
         return self.androidversion['Name']
 
+    def get_dex(self):
+        """
+        :return: dex file
+        """
+        return self.get_file('classes.dex')
+
     def get_files(self):
         """
             Return the files inside the APK
             :rtype: a list of strings
         """
         return self.zip.namelist()
-
-    def get_raw(self):
-        """
-            Return raw bytes of the APK
-
-            :rtype: string
-        """
-        return self.__raw
 
     def get_file(self, filename):
         """
@@ -142,29 +136,17 @@ class APK(object):
         except KeyError:
             return ''
 
-    def get_dex(self):
-        """
-            Return the raw data of the classes dex file
-
-            :rtype: string
-        """
-
-        return self.get_file('classes.dex')
-
     def get_elements(self, tag_name, attribute):
         """
             Return elements in xml files which match with the tag name and the specific attribute
-
             :param tag_name: a string which specify the tag name
             :param attribute: a string which specify the attribute
         """
-
         l = []
         for i in self.xml:
             for item in self.xml[i].getElementsByTagName(tag_name):
                 value = item.getAttributeNS(NS_ANDROID_URI, attribute)
                 value = self.format_value(value)
-
                 l.append(str(value))
         return l
 
@@ -179,19 +161,15 @@ class APK(object):
     def get_element(self, tag_name, attribute):
         """
             Return element in xml files which match with the tag name and the specific attribute
-
             :param tag_name: specify the tag name
             :type tag_name: string
             :param attribute: specify the attribute
             :type attribute: string
-
             :rtype: string
         """
-
         for i in self.xml:
             for item in self.xml[i].getElementsByTagName(tag_name):
                 value = item.getAttributeNS(NS_ANDROID_URI, attribute)
-
                 if len(value) > 0x0000:
                     return value
         return None
@@ -199,27 +177,20 @@ class APK(object):
     def get_main_activity(self):
         """
             Return the name of the main activity
-
             :rtype: string
         """
-
         x = set()
         y = set()
-
         for i in self.xml:
             for item in self.xml[i].getElementsByTagName('activity'):
                 for sitem in item.getElementsByTagName('action'):
                     val = sitem.getAttributeNS(NS_ANDROID_URI, 'name')
                     if val == 'android.intent.action.MAIN':
-                        x.add(item.getAttributeNS(NS_ANDROID_URI, 'name'
-                              ))
-
+                        x.add(item.getAttributeNS(NS_ANDROID_URI, 'name'))
                 for sitem in item.getElementsByTagName('category'):
                     val = sitem.getAttributeNS(NS_ANDROID_URI, 'name')
                     if val == 'android.intent.category.LAUNCHER':
-                        y.add(item.getAttributeNS(NS_ANDROID_URI, 'name'
-                              ))
-
+                        y.add(item.getAttributeNS(NS_ANDROID_URI, 'name'))
         z = x.intersection(y)
         if len(z) > 0x0000:
             return self.format_value(z.pop())
@@ -228,37 +199,29 @@ class APK(object):
     def get_activities(self):
         """
             Return the android:name attribute of all activities
-
             :rtype: a list of string
         """
-
         return self.get_elements('activity', 'name')
 
     def get_services(self):
         """
             Return the android:name attribute of all services
-
             :rtype: a list of string
         """
-
         return self.get_elements('service', 'name')
 
     def get_receivers(self):
         """
             Return the android:name attribute of all receivers
-
             :rtype: a list of string
         """
-
         return self.get_elements('receiver', 'name')
 
     def get_providers(self):
         """
             Return the android:name attribute of all providers
-
             :rtype: a list of string
         """
-
         return self.get_elements('provider', 'name')
 
     def get_intent_filters(self, category, name):
@@ -295,41 +258,29 @@ class APK(object):
 
         if not d['category']:
             del d['category']
-
         return d
 
     def get_permissions(self):
         """
             Return permissions
-
             :rtype: list of string
         """
-
         return self.permissions
 
     def get_details_permissions(self):
         """
             Return permissions with details
-
             :rtype: list of string
         """
-
         l = {}
-
         for i in self.permissions:
-            perm = i
-            pos = i.rfind('.')
-
-            if pos != -0x0001:
-                perm = i[pos + 0x0001:]
-
             try:
-                l[i] = DVM_PERMISSIONS['MANIFEST_PERMISSION'][perm]
+                l[i] = DVM_PERMISSIONS['MANIFEST_PERMISSION'][i]
+
             except KeyError:
                 l[i] = ['normal',
                         'Unknown permission from android reference',
                         'Unknown permission from android reference']
-
         return l
 
     def get_max_sdk_version(self):
@@ -473,15 +424,6 @@ class APK(object):
         return None
 
     def show(self):
-        self.get_files_types()
-
-        print 'FILES: '
-        for i in self.get_files():
-            try:
-                print '\t', i, self.files[i], '%x' % self.files_crc32[i]
-            except KeyError:
-                print '\t', i, '%x' % self.files_crc32[i]
-
         print 'PERMISSIONS: '
         details_permissions = self.get_details_permissions()
         for i in details_permissions:
@@ -507,31 +449,6 @@ class APK(object):
             print '\t', i, filters or ''
 
         print 'PROVIDERS: ', self.get_providers()
-
-
-def show_Certificate(cert):
-    print 'Issuer: C=%s, CN=%s, DN=%s, E=%s, L=%s, O=%s, OU=%s, S=%s' \
-        % (
-        cert.issuerC(),
-        cert.issuerCN(),
-        cert.issuerDN(),
-        cert.issuerE(),
-        cert.issuerL(),
-        cert.issuerO(),
-        cert.issuerOU(),
-        cert.issuerS(),
-        )
-    print 'Subject: C=%s, CN=%s, DN=%s, E=%s, L=%s, O=%s, OU=%s, S=%s' \
-        % (
-        cert.subjectC(),
-        cert.subjectCN(),
-        cert.subjectDN(),
-        cert.subjectE(),
-        cert.subjectL(),
-        cert.subjectO(),
-        cert.subjectOU(),
-        cert.subjectS(),
-        )
 
 
 ######################################################## AXML FORMAT ########################################################

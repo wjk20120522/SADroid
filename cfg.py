@@ -3,16 +3,13 @@
 
 import sys
 from optparse import OptionParser
-
 from androguard.core.bytecodes import apk, dvm
 from androguard.core.analysis import analysis, ganalysis
 from androguard.core import androconf
 from androguard.util import read
 
-option_0 = {'name': ('-i', '--input'),
-            'help': 'filename input (dex, apk)', 'nargs': 1}
-option_1 = {'name': ('-o', '--output'),
-            'help': 'filename output of the gexf', 'nargs': 1}
+option_0 = {'name': ('-i', '--input'), 'help': 'filename input (dex, apk)', 'nargs': 1}
+option_1 = {'name': ('-o', '--output'), 'help': 'filename output of the gexf', 'nargs': 1}
 
 options_io = [option_0, option_1]
 

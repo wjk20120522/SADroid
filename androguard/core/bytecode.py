@@ -473,7 +473,7 @@ def method2png(output, mx, raw=False):
     """
 
     buff = raw
-    if raw == False:
+    if raw is False:
         buff = method2dot(mx)
 
     method2format(output, 'png', mx, buff)
@@ -492,7 +492,7 @@ def method2jpg(output, mx, raw=False):
     """
 
     buff = raw
-    if raw == False:
+    if raw is False:
         buff = method2dot(mx)
 
     method2format(output, 'jpg', mx, buff)
@@ -752,9 +752,6 @@ def object_to_str(obj):
     elif obj == None:
         return ''
     else:
-
-        # print type(obj), obj
-
         return obj.get_raw()
 
 
