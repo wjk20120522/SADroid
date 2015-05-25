@@ -52,7 +52,7 @@ class Color(object):
 
 CONF = {  # Full python or mix python/c++ (native)
           # "ENGINE" : "automatic",
-          #    "DEOBFUSCATED_STRING_METH" : get_deobfuscated_string,
+          # "DEOBFUSCATED_STRING_METH" : get_deobfuscated_string,
     'RECODE_ASCII_STRING': False,
     'RECODE_ASCII_STRING_METH': None,
     'LAZY_ANALYSIS': False,

@@ -54,7 +54,9 @@ class APK(object):
         self.package = ''
         self.androidversion = {}
         self.permissions = []
+        self.no_duplicate_permission = []
         self.valid_apk = False
+        self.xmlcallbacks = []
 
         self.__raw = read(filename)
 
@@ -77,6 +79,15 @@ class APK(object):
 
                     if not os.path.exists('output'):
                         os.mkdir('output')
+            elif i.find("res/layout/") != -1:   # find the onClick callback method in layout xml
+                try:
+                    xml = minidom.parseString(AXMLPrinter(self.zip.read(i)).get_buff())
+                    for item in xml.getElementsByTagName("Button"):
+                            callback = item.getAttributeNS(NS_ANDROID_URI, 'onClick')
+                            if callback != "":
+                                self.xmlcallbacks.append(callback)
+                except:
+                    pass
 
     def get_AndroidManifest(self):
         """
@@ -267,6 +278,16 @@ class APK(object):
         """
         return self.permissions
 
+    def get_no_duplicate_permission(self):
+        """
+        return permissions
+        :return: list of string
+        """
+        for permission in self.permissions:
+            if permission not in self.no_duplicate_permission:
+                self.no_duplicate_permission.append(permission)
+        return self.no_duplicate_permission
+
     def get_details_permissions(self):
         """
             Return permissions with details
@@ -455,7 +476,6 @@ class APK(object):
 # Translated from http://code.google.com/p/android4me/source/browse/src/android/content/res/AXmlResourceParser.java
 
 UTF8_FLAG = 256
-
 
 class StringBlock(object):
 
@@ -991,10 +1011,10 @@ class AXMLPrinter(object):
 
                 self.buff += '%s\n' % self.axml.getText()
             elif _type == END_DOCUMENT:
-
                 break
 
-    def _escape(self, s):
+    @staticmethod
+    def _escape(s):
         s = s.replace('&', '&amp;')
         s = s.replace('"', '&quot;')
         s = s.replace("'", '&apos;')
@@ -1012,10 +1032,10 @@ class AXMLPrinter(object):
     def get_xml_obj(self):
         return minidom.parseString(self.get_buff())
 
-    def getPrefix(self, prefix):
-        if prefix == None or len(prefix) == 0x0000:
+    @staticmethod
+    def getPrefix(prefix):
+        if prefix is None or len(prefix) == 0x0000:
             return u''
-
         return prefix + u':'
 
     def getAttributeValue(self, index):
@@ -1049,18 +1069,16 @@ class AXMLPrinter(object):
 
             return '%f%s' % (complexToFloat(_data) * 100,
                              FRACTION_UNITS[_data & COMPLEX_UNIT_MASK])
-        elif _type >= TYPE_FIRST_COLOR_INT and _type \
-            <= TYPE_LAST_COLOR_INT:
-
+        elif TYPE_FIRST_COLOR_INT <= _type <= TYPE_LAST_COLOR_INT:
             return '#%08X' % _data
-        elif _type >= TYPE_FIRST_INT and _type <= TYPE_LAST_INT:
-
+        elif TYPE_FIRST_INT <= _type <= TYPE_LAST_INT:
             return '%d' % androconf.long2int(_data)
 
         return '<0x%X, type 0x%02X>' % (_data, _type)
 
-    def getPackage(self, id):
-        if id >> 24 == 0x0001:
+    @staticmethod
+    def getPackage(ids):
+        if ids >> 24 == 0x0001:
             return 'android:'
         return ''
 

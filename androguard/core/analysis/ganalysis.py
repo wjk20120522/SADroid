@@ -1154,6 +1154,7 @@ ID_ATTRIBUTES = {
     'dynamic_code': 6,
     }
 
+out_file = open("methodsinvoke.txt", "w")
 
 class GVMAnalysis(object):
 
@@ -1168,24 +1169,30 @@ class GVMAnalysis(object):
         self.GI = DiGraph()
 
         for j in self.vmx.tainted_packages.get_internal_packages():
+
             (src_class_name, src_method_name, src_descriptor) = j.get_src(self.vm.get_class_manager())
             (dst_class_name, dst_method_name, dst_descriptor) = j.get_dst(self.vm.get_class_manager())
+            if src_class_name.find("Landroid/support/v4") == -1 and src_class_name.find("Landroid/support/v7") == -1:
+                n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
+                n2 = self._get_node(dst_class_name, dst_method_name, dst_descriptor)
 
-            n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
-            n2 = self._get_node(dst_class_name, dst_method_name, dst_descriptor)
-
-            self.G.add_edge(n1.id, n2.id)
-            n1.add_edge(n2, j)
+                self.G.add_edge(n1.id, n2.id)
+                n1.add_edge(n2, j)
+                print >> out_file, src_class_name + "---" + src_method_name + "----" + src_descriptor
+                print >> out_file, dst_class_name + "---" + dst_method_name + "-----" + dst_descriptor
 
         internal_new_packages = self.vmx.tainted_packages.get_internal_new_packages()
         for j in internal_new_packages:
             for path in internal_new_packages[j]:
                 (src_class_name, src_method_name, src_descriptor) = path.get_src(self.vm.get_class_manager())
-
+                if src_class_name.find("Landroid/support/v4") == -1 and src_class_name.find("Landroid/support/v7") == -1:
+                    print >> out_file, src_class_name + "---" + src_method_name + "----" + src_descriptor
                 n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
                 n2 = self._get_node(j, '', '')
                 self.GI.add_edge(n2.id, n1.id)
                 n1.add_edge(n2, path)
+
+        out_file.close()
 
         if apk is not None:
             for i in apk.get_activities():
@@ -1220,6 +1227,7 @@ class GVMAnalysis(object):
                     n2.set_attributes({'color': RECEIVER_COLOR})
                     self.G.add_edge(n2.id, n1.id)
                     self.entry_nodes.append(n1.id)
+
 
         # Specific Java/Android library
 
@@ -1425,7 +1433,6 @@ class GVMAnalysis(object):
             buff += self.nodes_id[node].get_attributes_gexf()
             buff += '</node>\n'
         buff += '</nodes>\n'
-
 
         buff += '<edges>\n'
         nb = 0

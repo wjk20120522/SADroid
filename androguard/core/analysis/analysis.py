@@ -215,13 +215,11 @@ class DVMBasicBlock(object):
         Get all instructions from a basic block.
         :rtype: Return all instructions in the current basic block
       """
-
         tmp_ins = []
         idx = 0
         for i in self.method.get_instructions():
             if  self.start <= idx < self.end:
                 tmp_ins.append(i)
-
             idx += i.get_length()
         return tmp_ins
 
@@ -1488,7 +1486,6 @@ class BasicBlocks(object):
         """
             :rtype: return each basic block (:class:`DVMBasicBlock` object)
         """
-
         for i in self.bb:
             yield i
 
@@ -1496,7 +1493,6 @@ class BasicBlocks(object):
         """
             :rtype: a list of basic blocks (:class:`DVMBasicBlock` objects)
         """
-
         return self.bb
 
     def get_basic_block_pos(self, idx):
@@ -1578,7 +1574,6 @@ BO['BasicOPCODES_H'] = []
 for i in BO['BasicOPCODES']:
     BO['BasicOPCODES_H'].append(re.compile(i))
 
-
 class MethodAnalysis(object):
 
     """
@@ -1639,20 +1634,20 @@ class MethodAnalysis(object):
         for i in instructions:
 
             # index is a destination
-
             if idx in l:
                 if current_basic.get_nb_instructions() != 0:
                     current_basic = BO['BasicClass'](current_basic.get_end(),
                         self.__vm, self.method, self.basic_blocks)
                     self.basic_blocks.push(current_basic)
+
             current_basic.push(i)
 
             # index is a branch instruction
-
             if idx in h:
                 current_basic = BO['BasicClass'](current_basic.get_end(),
                         self.__vm, self.method, self.basic_blocks)
                 self.basic_blocks.push(current_basic)
+
             idx += i.get_length()
 
         if current_basic.get_nb_instructions() == 0:
@@ -1737,10 +1732,8 @@ class MethodAnalysis(object):
     def get_tags(self):
         """
           Return the tags of the method
-
           :rtype: a :class:`Tags` object
       """
-
         return self.tags
 
 
@@ -1835,7 +1828,6 @@ class VMAnalysis(object):
 
            :rtype: a :class:`MethodAnalysis` object
         """
-
         for i in self.hmethods:
             yield self.hmethods[i]
 

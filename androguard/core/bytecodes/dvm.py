@@ -344,7 +344,7 @@ def determineNext(i, end, m):
     if op_value == 0x27 or 0x0e <= op_value <= 0x11:
         return [-1]
     elif 0x28 <= op_value <= 0x2a:
-    # goto
+        # goto
         off = i.get_ref_off() * 2
         return [off + end]
     elif 0x32 <= op_value <= 0x3d:
@@ -1672,7 +1672,7 @@ class EncodedValue(object):
             ret |= ord(b) << shift
             shift += 8
 
-        return (ret, buf)
+        return ret, buf
 
     def show(self):
         bytecode._PrintSubBanner('Encoded Value')
@@ -1912,7 +1912,6 @@ class EncodedArrayItem(object):
     def get_value(self):
         """
           Return the bytes representing the encoded array value
-
           :rtype: a :class:`EncodedArray` object
       """
 
@@ -1923,9 +1922,6 @@ class EncodedArrayItem(object):
 
     def reload(self):
         pass
-
-    def get_value(self):
-        return self.value
 
     def show(self):
         bytecode._PrintSubBanner('Encoded Array Item')
@@ -2455,7 +2451,6 @@ class FieldIdItem(object):
 
             :rtype: string
         """
-
         return self.type_idx_value
 
     def get_name(self):
@@ -3147,10 +3142,10 @@ class EncodedMethod(object):
 
         self.show_info()
         self.show_notes()
-        if self.code != None:
+        if self.code is not None:
             self.each_params_by_register(self.code.get_registers_size(),
                     self.get_descriptor())
-            if self.CM.get_vmanalysis() == None:
+            if self.CM.get_vmanalysis() is None:
                 self.code.show()
             else:
                 self.code.pretty_show(self.CM.get_vmanalysis().get_method(self))
@@ -3174,7 +3169,7 @@ class EncodedMethod(object):
           Display the notes about the method
       """
 
-        if self.notes != []:
+        if self.notes is not []:
             bytecode._PrintSubBanner('Notes')
             for i in self.notes:
                 bytecode._PrintNote(i)
@@ -3245,7 +3240,7 @@ class EncodedMethod(object):
             :rtype: an :class:`Instruction` object
         """
 
-        if self._code != None:
+        if self._code is not None:
             return self.code.get_bc().get_instruction(idx, off)
         return None
 
@@ -3750,7 +3745,7 @@ class ClassDefItem(object):
             :rtype: string
         """
 
-        if self.access_flags_string == None:
+        if self.access_flags_string is None:
             self.access_flags_string = \
                 get_access_flags_string(self.get_access_flags())
 
@@ -4185,14 +4180,11 @@ class Instruction(object):
     """
         This class represents a dalvik instruction
     """
-
     def get_kind(self):
         """
             Return the 'kind' argument of the instruction
-
             :rtype: int
         """
-
         if self.OP > 255:
             if self.OP >= 0xf2ff:
                 return DALVIK_OPCODES_OPTIMIZED[self.OP][1][1]
@@ -4205,7 +4197,6 @@ class Instruction(object):
 
             :rtype: string
         """
-
         if self.OP > 255:
             if self.OP >= 0xf2ff:
                 return DALVIK_OPCODES_OPTIMIZED[self.OP][1][0]
@@ -4215,10 +4206,8 @@ class Instruction(object):
     def get_op_value(self):
         """
             Return the value of the opcode
-
             :rtype: int
         """
-
         return self.OP
 
     def get_literals(self):
@@ -4261,7 +4250,6 @@ class Instruction(object):
 
           :rtype: string
       """
-
         raise 'not implemented'
 
     def get_operands(self, idx=-1):
@@ -4270,7 +4258,6 @@ class Instruction(object):
 
           :rtype: list
       """
-
         raise 'not implemented'
 
     def get_length(self):
@@ -4279,7 +4266,6 @@ class Instruction(object):
 
           :rtype: int
       """
-
         raise 'not implemented'
 
     def get_raw(self):
@@ -4288,7 +4274,6 @@ class Instruction(object):
 
           :rtype: string
       """
-
         raise 'not implemented'
 
     def get_ref_kind(self):
@@ -4297,7 +4282,6 @@ class Instruction(object):
 
           :rtype: value
       """
-
         raise 'not implemented'
 
     def get_formatted_operands(self):
@@ -7467,7 +7451,7 @@ class ClassManager(object):
        This class is used to access to all elements (strings, type, proto ...) of the dex format
     """
 
-    def __init__(self, vm, config):
+    def __init__(self, vm):
         self.vm = vm
         self.buff = vm
 
@@ -7484,18 +7468,10 @@ class ClassManager(object):
 
         self.__cached_proto = {}
 
-        self.recode_ascii_string = config['RECODE_ASCII_STRING']
+        self.recode_ascii_string = False
         self.recode_ascii_string_meth = None
-        if config['RECODE_ASCII_STRING_METH']:
-            self.recode_ascii_string_meth = \
-                config['RECODE_ASCII_STRING_METH']
-
-        self.lazy_analysis = config['LAZY_ANALYSIS']
 
         self.hook_strings = {}
-
-        self.engine = []
-        self.engine.append('python')
 
         if self.vm:
             self.odex_format = self.vm.get_format_type() == 'ODEX'
@@ -7586,19 +7562,12 @@ class ClassManager(object):
     def get_string(self, idx):  #id is index
         if idx in self.hook_strings:
             return self.hook_strings[idx]
-
         try:
             off = self.__manage_item['TYPE_STRING_ID_ITEM'][idx].get_string_data_off()
         except IndexError:
-            print 'can here'
             bytecode.Warning('unknown string item @ %d' % idx)
             return 'AG:IS: invalid string'
-
         try:
-            # if self.recode_ascii_string:
-            #     if self.recode_ascii_string_meth:
-            #         return self.recode_ascii_string_meth(self.__strings_off[off].get())
-            #     return self.get_ascii_string(self.__strings_off[off].get())
             return self.__strings_off[off].get()
         except KeyError:
             bytecode.Warning('unknown string item @ 0x%x(%d)' % (off,
@@ -7904,16 +7873,13 @@ class DalvikVMFormat(bytecode._Bytecode):
           DalvikVMFormat( read("classes.dex") )
     """
 
-    def __init__(self, buff, config=None):
+    def __init__(self, buff):
         super(DalvikVMFormat, self).__init__(buff)
 
-        self.config = config
-        if not self.config:
-            self.config = \
-                {'RECODE_ASCII_STRING': CONF['RECODE_ASCII_STRING'],
-                 'RECODE_ASCII_STRING_METH': CONF['RECODE_ASCII_STRING_METH'],
-                 'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
-        self.CM = ClassManager(self, self.config)
+        self.config = {'RECODE_ASCII_STRING': CONF['RECODE_ASCII_STRING'],
+                       'RECODE_ASCII_STRING_METH': CONF['RECODE_ASCII_STRING_METH'],
+                       'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
+        self.CM = ClassManager(self)
         self.classes_names = None
         self.__cache_methods = None
         self.__cached_methods_idx = None
@@ -7923,7 +7889,7 @@ class DalvikVMFormat(bytecode._Bytecode):
         print time.strftime("%H:%M:%S", time.localtime())
 
     def _load(self):
-        self.__header = HeaderItem(self, ClassManager(None, self.config))
+        self.__header = HeaderItem(self, ClassManager(None))
         if self.__header.map_off == 0:
             bytecode.Warning('no map list!!!')
             exit()
@@ -8023,88 +7989,6 @@ class DalvikVMFormat(bytecode._Bytecode):
         """
 
         self.map_list.pretty_show()
-
-    def save(self):
-        """
-          Return the dex (with the modifications) into raw format (fix checksums)
-          (beta: do not use !)
-
-          :rtype: string
-      """
-
-        l = []
-        h = {}
-        s = {}
-        h_r = {}
-
-        idx = 0
-        for i in self.map_list.get_obj():
-            length = 0
-
-            if isinstance(i, list):
-                for j in i:
-                    if isinstance(j, AnnotationsDirectoryItem):
-                        if idx % 4 != 0:
-                            idx = idx + 4 - idx % 4
-
-                    l.append(j)
-
-                    c_length = j.get_length()
-                    h[j] = idx + length
-                    h_r[idx + length] = j
-                    s[idx + length] = c_length
-
-                    length += c_length
-
-            # debug("SAVE" + str(j) + " @ 0x%x" % (idx+length))
-
-                debug('SAVE ' + str(i[0]) + ' @0x%x (%x)' % (idx,
-                      length))
-            else:
-
-                if isinstance(i, MapList):
-                    if idx % 4 != 0:
-                        idx = idx + 4 - idx % 4
-
-                l.append(i)
-                h[i] = idx
-                h_r[idx] = i
-
-                length = i.get_length()
-
-                s[idx] = length
-
-                debug('SAVE ' + str(i) + ' @0x%x (%x)' % (idx, length))
-
-            idx += length
-
-        self.header.file_size = idx
-
-        last_idx = 0
-        for i in l:
-            idx = h[i]
-            i.set_off(h[i])
-
-#        print i, hex(h[ i ])
-
-            last_idx = idx + s[idx]
-
-        last_idx = 0
-        buff = ''
-        for i in l:
-            idx = h[i]
-
-            if idx != last_idx:
-                debug('Adjust alignment @%x with 00 %x' % (idx, idx
-                      - last_idx))
-                buff += '\00' * (idx - last_idx)
-
-            buff += i.get_raw()
-            last_idx = idx + s[idx]
-
-        debug('GLOBAL SIZE %d' % len(buff))
-
-        return self.fix_checksums(buff)
 
     @staticmethod
     def fix_checksums(buff):
@@ -8267,7 +8151,6 @@ class DalvikVMFormat(bytecode._Bytecode):
 
           :rtype: a list of :class:`EncodedMethod` objects
         """
-
         l = []
         for i in self.classes.class_def:
             for j in i.get_methods():

@@ -17,6 +17,7 @@ def main(options):
     if options.input is not None and options.output is not None:
         vm = None
         a = apk.APK(options.input)
+
         if a.is_valid_APK():
             vm = dvm.DalvikVMFormat(a.get_dex())
         else:
