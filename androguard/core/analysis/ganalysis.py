@@ -1162,60 +1162,61 @@ class GVMAnalysis(object):
         self.vmx = vmx
         self.vm = self.vmx.get_vm()
 
-        self.nodes = {}
-        self.nodes_id = {}
+        self.nodes = {}         # key => NodeF
+        self.nodes_id = {}      # id => NodeF
         self.entry_nodes = []
         self.G = DiGraph()
         self.GI = DiGraph()
 
-        for j in self.vmx.tainted_packages.get_internal_packages():
-
+        for j in self.vmx.tainted_packages.get_internal_packages():     # j: PathP
             (src_class_name, src_method_name, src_descriptor) = j.get_src(self.vm.get_class_manager())
             (dst_class_name, dst_method_name, dst_descriptor) = j.get_dst(self.vm.get_class_manager())
-            if src_class_name.find("Landroid/support/v4") == -1 and src_class_name.find("Landroid/support/v7") == -1:
+            if src_class_name.find("Landroid/support/") == -1:
                 n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
                 n2 = self._get_node(dst_class_name, dst_method_name, dst_descriptor)
 
                 self.G.add_edge(n1.id, n2.id)
                 n1.add_edge(n2, j)
                 print >> out_file, src_class_name + "---" + src_method_name + "----" + src_descriptor
-                print >> out_file, dst_class_name + "---" + dst_method_name + "-----" + dst_descriptor
+                print >> out_file, dst_class_name + "---" + dst_method_name + "----" + dst_descriptor
 
         internal_new_packages = self.vmx.tainted_packages.get_internal_new_packages()
         for j in internal_new_packages:
             for path in internal_new_packages[j]:
                 (src_class_name, src_method_name, src_descriptor) = path.get_src(self.vm.get_class_manager())
-                if src_class_name.find("Landroid/support/v4") == -1 and src_class_name.find("Landroid/support/v7") == -1:
-                    print >> out_file, src_class_name + "---" + src_method_name + "----" + src_descriptor
-                n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
-                n2 = self._get_node(j, '', '')
-                self.GI.add_edge(n2.id, n1.id)
-                n1.add_edge(n2, path)
+                if src_class_name.find("Landroid/support/") == -1:
+                    print >> out_file, src_class_name + "----" + src_method_name + "----" + src_descriptor
+                    n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
+                    n2 = self._get_node(j, '', '')
+                    self.GI.add_edge(n2.id, n1.id)
+                    n1.add_edge(n2, path)
 
         out_file.close()
 
+        # link the component to its life cycle callbacks
         if apk is not None:
-            for i in apk.get_activities():
+            for i in apk.get_activities():      # link Activity to onCreate
                 j = bytecode.FormatClassToJava(i)
+
                 n1 = self._get_exist_node(j, 'onCreate', '(Landroid/os/Bundle;)V')
                 if n1 is not None:
                     n1.set_attributes({'type': 'activity'})
                     n1.set_attributes({'color': ACTIVITY_COLOR})
-                    n2 = self._get_new_node_from(n1, 'ACTIVITY')
+                    n2 = self._get_new_node_from(n1, 'ACTIVITY' + i.split('.')[-1])
                     n2.set_attributes({'color': ACTIVITY_COLOR})
                     self.G.add_edge(n2.id, n1.id)
                     self.entry_nodes.append(n1.id)
-            for i in apk.get_services():
+            for i in apk.get_services():        # link Service to onCreate
                 j = bytecode.FormatClassToJava(i)
                 n1 = self._get_exist_node(j, 'onCreate', '()V')
                 if n1 is not None:
                     n1.set_attributes({'type': 'service'})
                     n1.set_attributes({'color': SERVICE_COLOR})
-                    n2 = self._get_new_node_from(n1, 'SERVICE')
+                    n2 = self._get_new_node_from(n1, 'SERVICE' + i.split('.')[-1] )
                     n2.set_attributes({'color': SERVICE_COLOR})
                     self.G.add_edge(n2.id, n1.id)
                     self.entry_nodes.append(n1.id)
-            for i in apk.get_receivers():
+            for i in apk.get_receivers():       # link Receiver to onReceive
                 j = bytecode.FormatClassToJava(i)
                 n1 = self._get_exist_node(j, 'onReceive',
                         '(Landroid/content/Context; Landroid/content/Intent;)V'
@@ -1229,7 +1230,8 @@ class GVMAnalysis(object):
                     self.entry_nodes.append(n1.id)
 
 
-        # Specific Java/Android library
+        # Specific Java/Android library callbacks
+
 
         for c in self.vm.get_classes():
 
@@ -1363,23 +1365,10 @@ class GVMAnalysis(object):
     def _get_new_node_from(self, n, label):
         return self._get_new_node(n.class_name, n.method_name, n.descriptor + label, label)
 
-    def _get_new_node(
-        self,
-        class_name,
-        method_name,
-        descriptor,
-        label,
-        ):
+    def _get_new_node(self, class_name, method_name, descriptor, label):
         key = '%s %s %s' % (class_name, method_name, descriptor)
         if key not in self.nodes:
-            self.nodes[key] = NodeF(
-                len(self.nodes),
-                class_name,
-                method_name,
-                descriptor,
-                label,
-                False,
-                )
+            self.nodes[key] = NodeF( len(self.nodes), class_name, method_name, descriptor, label, False)
             self.nodes_id[self.nodes[key].id] = self.nodes[key]
 
         return self.nodes[key]
@@ -1500,12 +1489,12 @@ COLOR_PERMISSIONS_LEVEL = {
 
 class NodeF(object):
 
-    def __init__(self, id, class_name, method_name, descriptor, label=None, real=True,):
+    def __init__(self, ids, class_name, method_name, descriptor, label=None, real=True,):
         self.class_name = class_name
         self.method_name = method_name
         self.descriptor = descriptor
 
-        self.id = id
+        self.id = ids
         self.real = real
         self.risks = []
         self.api = {}

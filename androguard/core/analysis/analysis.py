@@ -309,8 +309,8 @@ class DVMBasicBlock(object):
                 method_info = self.__vm.get_cm_method(idx_meth)
                 if self.tainted_packages is not None:
                     self.tainted_packages.push_info(method_info[0], TAINTED_PACKAGE_CALL, idx, self.method, idx_meth)
-            elif op_value == 0x22:
 
+            elif op_value == 0x22:
             # new_instance
 
                 idx_type = i.get_ref_kind()
@@ -406,12 +406,7 @@ class TaintedVariable(object):
             return [self.var[0], self.var[2], self.var[1]]
         return self.var
 
-    def push(
-        self,
-        access,
-        idx,
-        ref,
-        ):
+    def push(self, access, idx, ref):
         m_idx = ref.get_method_idx()
 
         if m_idx not in self.paths:
@@ -580,14 +575,7 @@ class TaintedVariables(object):
             if var not in self.__vars[TAINTED_LOCAL_VARIABLE][_method]:
                 self.__vars[TAINTED_LOCAL_VARIABLE][_method][var] = TaintedVariable(var, _type)
 
-    def push_info(
-        self,
-        _type,
-        var,
-        access,
-        idx,
-        ref,
-        ):
+    def push_info(self, _type, var, access, idx, ref):
         if _type == TAINTED_FIELD:
             self.add(var, _type)
             key = var[0] + var[1] + var[2]
@@ -714,13 +702,7 @@ def show_PathVariable(vm, paths):
 
 class PathP(object):
 
-    def __init__(
-        self,
-        access,
-        idx,
-        src_idx,
-        dst_idx,
-        ):
+    def __init__(self, access, idx, src_idx, dst_idx):
         self.access_flag = access
         self.idx = idx
         self.src_idx = src_idx
@@ -763,13 +745,7 @@ class TaintedPackage(object):
     def gets(self):
         return self.paths
 
-    def push(
-        self,
-        access,
-        idx,
-        src_idx,
-        dst_idx,
-        ):
+    def push(self, access, idx, src_idx, dst_idx):
         p = PathP(access, idx, src_idx, dst_idx)
         self.paths[access].append(p)
         return p
@@ -1075,15 +1051,18 @@ class TaintedPackages(object):
             :rtype: return a list of the internal packages called in the application
         """
         classes = self.__vm.get_classes_names()
+
         l = []
-        for (m, _) in self.get_packages():
+        for (m, _) in self.get_packages():  # m: TaintedPackage
             paths = m.get_methods()
-            for j in paths:
+            for j in paths:     # j: PathP
                 if j.get_access_flag() == TAINTED_PACKAGE_CALL:
                     (dst_class_name, _, _) = j.get_dst(self.__vm.get_class_manager())
                     if dst_class_name in classes and m.get_name() in classes:
                         l.append(j)
         return l
+
+
 
     def get_internal_new_packages(self):
         """
@@ -1095,10 +1074,8 @@ class TaintedPackages(object):
         for (m, _) in self.get_packages():
             paths = m.get_new()
             for j in paths:
-                (src_class_name, _, _) = \
-                    j.get_src(self.__vm.get_class_manager())
-                if src_class_name in classes and m.get_name() \
-                    in classes:
+                (src_class_name, _, _) = j.get_src(self.__vm.get_class_manager())
+                if src_class_name in classes and m.get_name() in classes:
                     if j.get_access_flag() == TAINTED_PACKAGE_CREATE:
                         try:
                             l[m.get_name()].append(j)
@@ -1586,10 +1563,10 @@ class MethodAnalysis(object):
         :type method: a :class:`EncodedMethod` object
     """
 
-    def __init__(self, vm, method, tv):
+    def __init__(self, vm, method, vmAnalysis):
         self.__vm = vm              # DalvikVMFormat
         self.method = method        # EncodedMethod
-        self.tainted = tv           # VmAnalysis
+        self.tainted = vmAnalysis   # VmAnalysis
 
         self.basic_blocks = BasicBlocks(self.__vm, self.tainted)
         self.exceptions = Exceptions(self.__vm)
@@ -1611,10 +1588,8 @@ class MethodAnalysis(object):
 
         debug('Parsing instructions')
         instructions = [i for i in bc.get_instructions()]
-
         for i in instructions:
-
-            for j in BO['BasicOPCODES_H']:
+            for j in BO['BasicOPCODES_H']:      # branch
                 if j.match(i.get_name()) is not None:
                     v = BO['Dnext'](i, idx, self.method)
                     h[idx] = v
@@ -1774,12 +1749,11 @@ class VMAnalysis(object):
 
     """
        This class analyses a dex file
-
        :param _vm: the object which represent the dex file
        :type _vm: a :class:`DalvikVMFormat` object
 
        :Example:
-            VMAnalysis( DalvikVMFormat( read("toto.dex", binary=False) ) )
+            VMAnalysis( DalvikVMFormat( read("toto.dex") ))
     """
 
     def __init__(self, _vm):
@@ -1794,7 +1768,7 @@ class VMAnalysis(object):
         self.signature = None
 
         # 添加 污点成员
-        for i in self.__vm.get_all_fields():
+        for i in self.__vm.get_all_fields():    #FieldIdItem
             self.tainted_variables.add([i.get_class_name(), i.get_descriptor(), i.get_name()], TAINTED_FIELD)
 
         self.methods = []   # the list of MethodAnalysis

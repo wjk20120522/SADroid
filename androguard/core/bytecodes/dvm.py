@@ -358,7 +358,7 @@ def determineNext(i, end, m):
         code = m.get_code().get_bc()
         off = i.get_ref_off() * 2
 
-        data = code.get_ins_off(off + end)
+        data = code.get_ins_off(off + end)  # get that instruction of address "off + end"
 
         if data is not None:
             for target in data.get_targets():
@@ -368,7 +368,7 @@ def determineNext(i, end, m):
     return []
 
 
-def determineException(vm, m):
+def determineException(vm, m):  # m : EncodedMethod
 
     # no exceptions !
 
@@ -3714,10 +3714,8 @@ class ClassDefItem(object):
     def get_name(self):
         """
             Return the name of this class
-
             :rtype: int
         """
-
         return self.name
 
     def get_superclassname(self):
@@ -4404,13 +4402,12 @@ class FillArrayData(object):
     def get_formatted_operands(self):
         return None
 
-    def get_name(self):
+    @staticmethod
+    def get_name():
         """
             Return the name of the instruction
-
             :rtype: string
         """
-
         return 'fill-array-data-payload'
 
     def show_buff(self, pos):
@@ -4544,13 +4541,12 @@ class SparseSwitch(object):
     def get_formatted_operands(self):
         return None
 
-    def get_name(self):
+    @staticmethod
+    def get_name():
         """
             Return the name of the instruction
-
             :rtype: string
         """
-
         return 'sparse-switch-payload'
 
     def show_buff(self, pos):
@@ -4682,13 +4678,12 @@ class PackedSwitch(object):
     def get_formatted_operands(self):
         return None
 
-    def get_name(self):
+    @staticmethod
+    def get_name():
         """
             Return the name of the instruction
-
             :rtype: string
         """
-
         return 'packed-switch-payload'
 
     def show_buff(self, pos):
@@ -6706,6 +6701,7 @@ class LinearSweepAlgorithm(object):
         self.odex = cm.get_odex_format()
 
         max_idx = size * calcsize('=H')
+
         if max_idx > len(insn):
             max_idx = len(insn)
 
@@ -6717,9 +6713,8 @@ class LinearSweepAlgorithm(object):
 
             op_value = unpack('=B', insn[idx])[0]
 
-          # print "%x %x" % (op_value, idx)
-
-          # payload instructions or extented/optimized instructions
+            # print "%x %x" % (op_value, idx)
+            # payload instructions or extented/optimized instructions
 
             if (op_value == 0 or op_value == 255) and idx + 2 < max_idx:
                 op_value = unpack('=H', insn[idx:idx + 2])[0]
@@ -6743,21 +6738,19 @@ class LinearSweepAlgorithm(object):
                         warning('error while decoding instruction ...'
                                 + why.__str__())
                 elif self.odex and op_value in DALVIK_OPCODES_OPTIMIZED:
-
-            # optimized instructions ?
-
+                    # optimized instructions ?
                     obj = get_optimized_instruction(cm, op_value,
                             insn[idx:])
                     classic_instruction = False
 
-          # classical instructions
+            # classical instructions
             if classic_instruction:
                 op_value = unpack('=B', insn[idx])[0]
                 obj = get_instruction(cm, op_value, insn[idx:], self.odex)
 
-          # emit instruction
+            # emit instruction
             yield obj
-            idx = idx + obj.get_length()
+            idx += obj.get_length()
 
 
 class DCode(object):
@@ -7970,10 +7963,8 @@ class DalvikVMFormat(bytecode._Bytecode):
         """
             This function returns a ClassManager object which allow you to get
             access to all index references (strings, methods, fields, ....)
-
             :rtype: :class:`ClassManager` object
         """
-
         return self.CM
 
     def show(self):
@@ -8123,7 +8114,6 @@ class DalvikVMFormat(bytecode._Bytecode):
     def get_all_fields(self):
         """
             Return a list of field items
-
             :rtype: a list of :class:`FieldIdItem` objects
         """
 
