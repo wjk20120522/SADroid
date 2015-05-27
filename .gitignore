@@ -7,3 +7,4 @@ output/*
 tools/*
 *~
 *.txt
+*.pyc

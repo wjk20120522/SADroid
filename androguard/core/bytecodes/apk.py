@@ -235,6 +235,21 @@ class APK(object):
         """
         return self.get_elements('provider', 'name')
 
+    def get_actions(self):      # for risk evaluation
+        actions = self.get_elements('action', 'name')
+        res = []
+        for action in actions:
+            if action not in res:
+                res.append(action)
+        return res
+
+    def get_system_actions(self):   # for risk evaluation
+        actions = []
+        for action in self.get_actions():
+            if action.find('android') == 0:
+                actions.append(action)
+        return actions
+
     def get_intent_filters(self, category, name):
         d = {}
 

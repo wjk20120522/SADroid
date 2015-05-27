@@ -1177,61 +1177,28 @@ class GVMAnalysis(object):
 
                 self.G.add_edge(n1.id, n2.id)
                 n1.add_edge(n2, j)
-                print >> out_file, src_class_name + "---" + src_method_name + "----" + src_descriptor
-                print >> out_file, dst_class_name + "---" + dst_method_name + "----" + dst_descriptor
+                # print >> out_file, src_class_name + "---" + src_method_name + "----" + src_descriptor
+                # print >> out_file, dst_class_name + "---" + dst_method_name + "----" + dst_descriptor
 
         internal_new_packages = self.vmx.tainted_packages.get_internal_new_packages()
         for j in internal_new_packages:
             for path in internal_new_packages[j]:
                 (src_class_name, src_method_name, src_descriptor) = path.get_src(self.vm.get_class_manager())
                 if src_class_name.find("Landroid/support/") == -1:
-                    print >> out_file, src_class_name + "----" + src_method_name + "----" + src_descriptor
+                    # print >> out_file, src_class_name + "----" + src_method_name + "----" + src_descriptor
                     n1 = self._get_node(src_class_name, src_method_name, src_descriptor)
                     n2 = self._get_node(j, '', '')
                     self.GI.add_edge(n2.id, n1.id)
                     n1.add_edge(n2, path)
 
-        out_file.close()
+        # out_file.close()
 
-        # link the component to its life cycle callbacks
-        if apk is not None:
-            for i in apk.get_activities():      # link Activity to onCreate
-                j = bytecode.FormatClassToJava(i)
-
-                n1 = self._get_exist_node(j, 'onCreate', '(Landroid/os/Bundle;)V')
-                if n1 is not None:
-                    n1.set_attributes({'type': 'activity'})
-                    n1.set_attributes({'color': ACTIVITY_COLOR})
-                    n2 = self._get_new_node_from(n1, 'ACTIVITY' + i.split('.')[-1])
-                    n2.set_attributes({'color': ACTIVITY_COLOR})
-                    self.G.add_edge(n2.id, n1.id)
-                    self.entry_nodes.append(n1.id)
-            for i in apk.get_services():        # link Service to onCreate
-                j = bytecode.FormatClassToJava(i)
-                n1 = self._get_exist_node(j, 'onCreate', '()V')
-                if n1 is not None:
-                    n1.set_attributes({'type': 'service'})
-                    n1.set_attributes({'color': SERVICE_COLOR})
-                    n2 = self._get_new_node_from(n1, 'SERVICE' + i.split('.')[-1] )
-                    n2.set_attributes({'color': SERVICE_COLOR})
-                    self.G.add_edge(n2.id, n1.id)
-                    self.entry_nodes.append(n1.id)
-            for i in apk.get_receivers():       # link Receiver to onReceive
-                j = bytecode.FormatClassToJava(i)
-                n1 = self._get_exist_node(j, 'onReceive',
-                        '(Landroid/content/Context; Landroid/content/Intent;)V'
-                        )
-                if n1 is not None:
-                    n1.set_attributes({'type': 'receiver'})
-                    n1.set_attributes({'color': RECEIVER_COLOR})
-                    n2 = self._get_new_node_from(n1, 'RECEIVER')
-                    n2.set_attributes({'color': RECEIVER_COLOR})
-                    self.G.add_edge(n2.id, n1.id)
-                    self.entry_nodes.append(n1.id)
-
+        # link the component to its life cycle and life cycle callbacks
+        self.link_activities(apk)
+        self.link_services(apk)
+        self.link_receivers(apk)
 
         # Specific Java/Android library callbacks
-
 
         for c in self.vm.get_classes():
 
@@ -1344,6 +1311,115 @@ class GVMAnalysis(object):
 
                         n1.add_risk('DEXCLASSLOADER')
 
+    def link_receivers(self, apk):
+        if apk is not None:
+            for i in apk.get_receivers():       # link Receiver to onReceive
+                    j = bytecode.FormatClassToJava(i)
+                    n1 = self._get_exist_node(j, 'onReceive',
+                            '(Landroid/content/Context; Landroid/content/Intent;)V'
+                            )
+                    if n1 is not None:
+                        n1.set_attributes({'type': 'receiver'})
+                        n1.set_attributes({'color': RECEIVER_COLOR})
+                        n2 = self._get_new_node_from(n1, 'RECEIVER' + i.split('.')[-1])
+                        n2.set_attributes({'color': RECEIVER_COLOR})
+                        self.G.add_edge(n2.id, n1.id)
+                        self.entry_nodes.append(n1.id)
+
+    def link_services(self, apk):
+        if apk is not None:
+            for i in apk.get_services():        # link Service to onCreate
+                j = bytecode.FormatClassToJava(i)
+                n1 = self._get_exist_node(j, 'onCreate', '()V')
+
+                if n1 is not None:
+                    n1.set_attributes({'type': 'service'})
+                    n1.set_attributes({'color': SERVICE_COLOR})
+                    n2 = self._get_new_node_from(n1, 'SERVICE' + i.split('.')[-1] )
+                    n2.set_attributes({'color': SERVICE_COLOR})
+                    self.G.add_edge(n2.id, n1.id)
+                    self.entry_nodes.append(n1.id)
+                    n3 = self._get_exist_node(j, 'onStartCommand', '(Landroid/content/Intent; I; I;)I')
+
+                    n4 = self._get_exist_node(j, "onBind", '(Landroid/content/Intent;)Landroid/os/IBinder')
+
+                    branch = self._get_new_node(j, 'branch', 'In the center of Service', '')
+                    n5 = self._get_exist_node(j, 'onUnbind', '(Landroid/content/Intent)V')
+                    n6 = self._get_exist_node(j, "onDestroy", '()V')
+
+
+                    if n3 is not None or n4 is not None:
+                        if n3 is not None:
+                            self.G.add_edge(n1.id, n3.id)
+                            self.G.add_edge(n3.id, branch.id)
+                        if n4 is not None:
+                            self.G.add_edge(n1.id, n4.id)
+                            self.G.add_edge(n4.id, branch.id)
+                    else:
+                        self.G.add_edge(n1.id, branch.id)
+
+                    if n5 is not None:
+                        self.G.add_edge(branch.id, n5.id)
+                        if n6 is not None:
+                            self.G.add_edge(n5.id, n6.id)
+                    else:
+                        if n6 is not None:
+                            self.G.add_edge(branch.id, n6.id)
+
+    def link_activities(self, apk):
+        if apk is not None:
+            for i in apk.get_activities():      # link Activity to onCreate
+                j = bytecode.FormatClassToJava(i)
+
+                n1 = self._get_exist_node(j, 'onCreate', '(Landroid/os/Bundle;)V')  # n1: NodeF
+                if n1 is not None:
+                    n1.set_attributes({'type': 'activity'})
+                    n1.set_attributes({'color': ACTIVITY_COLOR})
+                    n2 = self._get_new_node_from(n1, 'ACTIVITY' + i.split('.')[-1])
+                    n2.set_attributes({'color': ACTIVITY_COLOR})
+                    self.G.add_edge(n2.id, n1.id)
+                    self.entry_nodes.append(n1.id)
+
+                    n2 = self._get_exist_node(j, 'onStart', '()V')
+                    if n2 is not None:
+                        self.G.add_edge(n1.id, n2.id)       #link onCreate ot onStart
+                        n3 = self._get_exist_node(j, 'onResume', '()V')
+                        if n3 is not None:
+                            self.G.add_edge(n2.id, n3.id)       # link onStart to onResume
+                            branch = self._get_new_node(j, 'branch', "In the center of Activity", '')
+                            self.G.add_edge(n3.id, branch.id)   # link onResume to branch
+                    else:
+                        n3 = self._get_exist_node(j, 'onResume', '()V')
+                        if n3 is not None:
+                            self.G.add_edge(n1.id, n3.id)   # link onCreate to onResume
+                            branch = self._get_new_node(j, 'branch', "In the center of Activity", 'no')
+                            self.G.add_edge(n3.id, branch.id)   # link onResume to branch
+                        else:
+                            branch = self._get_new_node(j, 'branch', "In the center of Activity", 'no')
+                            self.G.add_edge(n1.id, branch.id)   #link onCrate to branch
+
+                branch = self._get_exist_node(j, "branch", "In the center of Activity")
+                if branch is not None:
+                    n4 = self._get_exist_node(j, 'onPause', '()V')
+                    n5 = self._get_exist_node(j, 'onStop', '()V')
+                    n6 = self._get_exist_node(j, 'onDestroy', '()V')
+                    if n4 is not None:
+                        self.G.add_edge(branch.id, n4.id)
+                        if n5 is not None:
+                            self.G.add_edge(n4.id, n5.id)
+                            if n6 is not None:
+                                self.G.add_edge(n5.id, n6.id)
+                        else:
+                            if n6 is not None:
+                                self.G.add_edge(n4.id, n6.id)
+                    else:
+                        if n5 is not None:
+                            self.G.add_edge(branch.id, n5.id)
+                            if n6 is not None:
+                                self.G.add_edge(n5.id, n6.id)
+                        else:
+                            if n6 is not None:
+                                self.G.add_edge(branch.id, n6.id)
 
     def _get_exist_node(self, class_name, method_name, descriptor):
         key = '%s %s %s' % (class_name, method_name, descriptor)
