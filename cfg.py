@@ -4,7 +4,8 @@
 import sys
 from optparse import OptionParser
 from androguard.core.bytecodes import apk, dvm
-from androguard.core.analysis import analysis, ganalysis
+from androguard.core.analysis import analysis
+from cfg import graphAnalysis
 from androguard.core import androconf
 from androguard.util import read
 
@@ -25,7 +26,7 @@ def main(options):
             exit()
 
         vmx = analysis.VMAnalysis(vm)
-        gvmx = ganalysis.GVMAnalysis(vmx, a)
+        gvmx = graphAnalysis.GVMAnalysis(vmx, a)
 
         b = gvmx.export_to_gexf()
         androconf.save_to_disk(b, options.output)

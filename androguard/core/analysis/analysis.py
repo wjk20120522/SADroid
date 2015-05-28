@@ -429,8 +429,6 @@ class TaintedVariable(object):
             for j in self.paths[i]:
                 self.__cache.append([j, i])
 
-              # yield j, i
-
         return self.__cache
 
     def get_paths_length(self):
@@ -442,7 +440,7 @@ class TaintedVariable(object):
 
 class TaintedVariables(object):
     """
-    The class is used to tainted the variables so we can get information when construct CFG
+    The class is used to tainted the variables so we can get information when construct cfg
 
     """
 
