@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 DVM_PERMISSIONS_BY_PERMISSION = {
     'BIND_DEVICE_ADMIN': {'Landroid/app/admin/DeviceAdminReceiver;': [('C'
