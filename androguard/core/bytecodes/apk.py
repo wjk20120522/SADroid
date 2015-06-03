@@ -84,8 +84,9 @@ class APK(object):
                     xml = minidom.parseString(AXMLPrinter(self.zip.read(i)).get_buff())
                     for item in xml.getElementsByTagName("Button"):
                             callback = item.getAttributeNS(NS_ANDROID_URI, 'onClick')
-                            if callback != "":
-                                self.xmlcallbacks.append(callback)
+                            buttonid = item.getAttributeNS(NS_ANDROID_URI, 'id')
+                            if callback != "" and buttonid != "":
+                                self.xmlcallbacks.append([buttonid, callback])
                 except:
                     pass
 
