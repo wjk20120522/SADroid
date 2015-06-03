@@ -12,7 +12,6 @@ for i in xrange(1, 103):
     with open("Implicit/" + str(i) + ".txt", 'w') as f:
         pass
 
-
 count = 0
 filenum = 1
 with open('../../tools/EdgeMiner/ImplicitEdges.txt') as bigfile:
@@ -20,9 +19,6 @@ with open('../../tools/EdgeMiner/ImplicitEdges.txt') as bigfile:
         with open("Implicit/" + str(filenum) + ".txt", 'a') as smallfile:
             smallfile.write(line)
         count += 1
-        if count == 51255:
+        if count == 50000:
             count = 0
             filenum += 1
-
-
-

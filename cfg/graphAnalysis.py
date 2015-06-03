@@ -10,19 +10,7 @@ from androguard.core.analysis.risk import PERMISSIONS_RISK, \
 from androguard.core.analysis.analysis import PathVar, \
     TAINTED_PACKAGE_CREATE
 
-#    Copyright (C) 2004-2011 by
-#    Aric Hagberg <hagberg@lanl.gov>
-#    Dan Schult <dschult@colgate.edu>
-#    Pieter Swart <swart@lanl.gov>
-#    All rights reserved.
-#    BSD license.
-
 from copy import deepcopy
-
-__author__ = """\n""".join(['Aric Hagberg (hagberg@lanl.gov)',
-                           'Pieter Swart (swart@lanl.gov)',
-                           'Dan Schult(dschult@colgate.edu)'])
-
 
 class Graph(object):
 
@@ -1138,7 +1126,7 @@ ID_ATTRIBUTES = {
     'dynamic_code': 6,
     }
 
-out_file = open("methodsinvoke.txt", "w")
+# out_file = open("methodsinvoke.txt", "w")
 
 class GVMAnalysis(object):
 
@@ -1182,42 +1170,10 @@ class GVMAnalysis(object):
         self.link_services(apk)
         self.link_receivers(apk)
 
+
+
         # Specific Java/Android library callbacks
-
-        for c in self.vm.get_classes():
-
-            # if c.get_superclassname() == "Landroid/app/Service;":
-            #    n1 = self._get_node( c.get_name(), "<init>", "()V" )
-            #    n2 = self._get_node( c.get_name(), "onCreate", "()V" )
-
-            #    self.G.add_edge( n1.id, n2.id )
-
-            if c.get_superclassname() == 'Ljava/lang/Thread;' \
-                or c.get_superclassname() == 'Ljava/util/TimerTask;':
-                for i in self.vm.get_method('run'):
-                    if i.get_class_name() == c.get_name():
-                        n1 = self._get_node(i.get_class_name(),
-                                i.get_name(), i.get_descriptor())
-                        n2 = self._get_node(i.get_class_name(), 'start'
-                                , i.get_descriptor())
-
-                        # link from start to run
-
-                        self.G.add_edge(n2.id, n1.id)
-                        n2.add_edge(n1, {})
-
-                        # link from init to start
-
-                        for init in self.vm.get_method('<init>'):
-                            if init.get_class_name() == c.get_name():
-                                n3 = \
-                                    self._get_node(init.get_class_name(),
-                                        '<init>', init.get_descriptor())
-
-                                # n3 = self._get_node( i.get_class_name(), "<init>", i.get_descriptor() )
-
-                                self.G.add_edge(n3.id, n2.id)
-                                n3.add_edge(n2, {})
+        self.link_callbacks()
 
             # elif c.get_superclassname() == "Landroid/os/AsyncTask;":
             #    for i in self.vm.get_method("doInBackground"):
@@ -1294,6 +1250,45 @@ class GVMAnalysis(object):
                         self.G.add_edge(n2.id, n1.id)
 
                         n1.add_risk('DEXCLASSLOADER')
+
+    def link_callbacks(self):
+        for c in self.vm.get_classes():
+
+            # if c.get_superclassname() == "Landroid/app/Service;":
+            #    n1 = self._get_node( c.get_name(), "<init>", "()V" )
+            #    n2 = self._get_node( c.get_name(), "onCreate", "()V" )
+
+            #    self.G.add_edge( n1.id, n2.id )
+            # for method in c.get_methods():
+
+
+
+            if c.get_superclassname() == 'Ljava/lang/Thread;' \
+                or c.get_superclassname() == 'Ljava/util/TimerTask;':
+                for i in self.vm.get_method('run'):
+                    if i.get_class_name() == c.get_name():
+                        n1 = self._get_node(i.get_class_name(),
+                                i.get_name(), i.get_descriptor())
+                        n2 = self._get_node(i.get_class_name(), 'start'
+                                , i.get_descriptor())
+
+                        # link from start to run
+
+                        self.G.add_edge(n2.id, n1.id)
+                        n2.add_edge(n1, {})
+
+                        # link from init to start
+
+                        for init in self.vm.get_method('<init>'):
+                            if init.get_class_name() == c.get_name():
+                                n3 = \
+                                    self._get_node(init.get_class_name(),
+                                        '<init>', init.get_descriptor())
+
+                                # n3 = self._get_node( i.get_class_name(), "<init>", i.get_descriptor() )
+
+                                self.G.add_edge(n3.id, n2.id)
+                                n3.add_edge(n2, {})
 
     def link_receivers(self, apk):
         if apk is not None:
