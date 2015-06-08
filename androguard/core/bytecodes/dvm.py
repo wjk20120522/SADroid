@@ -7712,7 +7712,7 @@ class ClassManager(object):
 
         class_def = self.__manage_item['TYPE_CLASS_DEF_ITEM'
                 ].get_class_idx(field.get_class_idx())
-        if class_def != None:
+        if class_def is not None:
             try:
                 name = 'FIELD_' \
                     + bytecode.FormatNameToPython(encoded_field.get_name())
