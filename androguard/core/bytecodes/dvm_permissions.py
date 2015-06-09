@@ -95,8 +95,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                       "Allows an application to read the user's call log."
                       ],
     'android.permission.WRITE_CALL_LOG': ['dangerous',
-                       "write (but not read) the user's contacts data."
-                       ,
+                       "write (but not read) the user's contacts data.",
                        "Allows an application to write (but not read) the user's contacts data."
                        ],
     'android.permission.READ_SOCIAL_STREAM': ['dangerous',
@@ -120,12 +119,10 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                       'Allows an application to read all of the calendar events stored on your phone. Malicious applications can use this to send your calendar events to other people.'
                       ],
     'android.permission.WRITE_CALENDAR': ['dangerous',
-                       'add or modify calendar events and send emails to guests'
-                       ,
+                       'add or modify calendar events and send emails to guests',
                        'Allows an application to add or change the events on your calendar, which may send emails to guests. Malicious applications can use this to erase or modify your calendar events or to send emails to guests.'
                        ],
-    'android.permission.READ_USER_DICTIONARY': ['dangerous', 'read user-defined dictionary'
-                             ,
+    'android.permission.READ_USER_DICTIONARY': ['dangerous', 'read user-defined dictionary',
                              'Allows an application to read any private words, names and phrases that the user may have stored in the user dictionary.'
                              ],
     'android.permission.WRITE_USER_DICTIONARY': ['normal',
@@ -137,8 +134,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                                "Allows the application to read all the URLs that the browser has visited and all of the browser\'s bookmarks."
                                ],
     'com.android.browser.permission.WRITE_HISTORY_BOOKMARKS': ['dangerous',
-                                "write Browser's history and bookmarks"
-                                ,
+                                "write Browser's history and bookmarks",
                                 "Allows an application to modify the browser\'s history or bookmarks stored on your phone. Malicious applications can use this to erase or modify your browser\'s data."
                                 ],
     'com.android.alarm.permission.SET_ALARM': ['normal', 'set alarm in alarm clock',
@@ -165,8 +161,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
             'Access extra location provider commands. Malicious applications could use this to interfere with the operation of the GPS or other location sources.'
             ],
     'android.permission.INSTALL_LOCATION_PROVIDER': ['signatureOrSystem',
-                                  'permission to install a location provider'
-                                  ,
+                                  'permission to install a location provider',
                                   'Create mock location sources for testing. Malicious applications can use this to override the location and/or status returned by real-location sources such as GPS or Network providers, or monitor and report your location to an external source.'
                                   ],
     'android.permission.HDMI_CEC': ['signatureOrSystem', 'hide', 'Allows HDMI-CEC service to access device and configuration files.This should only be used by HDMI-CEC service'],
@@ -213,8 +208,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                               'Allows an application to use the account authenticator capabilities of the Account Manager, including creating accounts as well as obtaining and setting their passwords.'
                               ],
     'android.permission.USE_CREDENTIALS': ['dangerous',
-                        'use the authentication credentials of an account'
-                        ,
+                        'use the authentication credentials of an account',
                         'Allows an application to request authentication tokens.'
                         ],
     'android.permission.MANAGE_ACCOUNTS': ['dangerous', 'manage the accounts list',
@@ -252,8 +246,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                       ],
     'android.permission.ACCESS_FM_RADIO': ['signatureOrSystem', 'access FM radio', 'Allows the app to access FM radio to listen to programmes.'],
     'android.permission.NET_ADMIN': ['signature',
-                  'configure network interfaces, configure/use IPSec, etc'
-                  ,
+                  'configure network interfaces, configure/use IPSec, etc',
                   'Allows access to configure network interfaces, configure/use IPSec, etc.'
                   ],
     'android.permission.REMOTE_AUDIO_PLAYBACK': ['signature', 'remote audio playback',
@@ -388,8 +381,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                         'modify the Google services map',
                         'Allows an application to modify the Google services map. Not for use by normal applications.'
                         ],
-    'android.permission.FORCE_STOP_PACKAGES': ['signature', 'force-stop other applications'
-                            ,
+    'android.permission.FORCE_STOP_PACKAGES': ['signature', 'force-stop other applications',
                             'Allows an application to stop other applications forcibly.'
                             ],
     'android.permission.RETRIEVE_WINDOW_CONTENT': ['signatureOrSystem', '',
@@ -432,8 +424,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
     'android.permission.ASEC_DESTROY': ['signature', 'destroy internal storage',
                      'Allows the application to destroy internal storage.'
                      ],
-    'android.permission.ASEC_MOUNT_UNMOUNT': ['signature', 'mount/unmount internal storage'
-                           ,
+    'android.permission.ASEC_MOUNT_UNMOUNT': ['signature', 'mount/unmount internal storage',
                            'Allows the application to mount/unmount internal storage.'
                            ],
     'android.permission.ASEC_RENAME': ['signature', 'rename internal storage',
@@ -535,8 +526,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                           ],
     'android.permission.GET_TOP_ACTIVITY_INFO': ['signature', 'get current app info', 'Allows the holder to retrieve private information about the current application in the foreground of the screen.'],
     'android.permission.READ_INPUT_STATE': ['signature',
-                         'record what you type and actions that you take'
-                         ,
+                         'record what you type and actions that you take',
                          'Allows applications to watch the keys that you press even when interacting with another application (such as entering a password). Should never be needed for normal applications.'
                          ],
     'android.permission.BIND_INPUT_METHOD': ['signature', 'bind to an input method',
@@ -657,8 +647,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                                   'Allows the application to start CDMA provisioning. Malicious applications may start CDMA provisioning unnecessarily'
                                   ],
     'android.permission.CONTROL_LOCATION_UPDATES': ['signatureOrSystem',
-                                 'control location update notifications'
-                                 ,
+                                 'control location update notifications',
                                  'Allows enabling/disabling location update notifications from the radio. Not for use by normal applications.'
                                  ],
     'android.permission.ACCESS_CHECKIN_PROPERTIES': ['signatureOrSystem',
@@ -672,8 +661,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
     'android.permission.BATTERY_STATS': ['signatureOrSystemOrDevelopment', 'modify battery statistics',
                       'Allows the modification of collected battery statistics. Not for use by normal applications.'
                       ],
-    'android.permission.BACKUP': ['signatureOrSystem', 'control system back up and restore'
-               ,
+    'android.permission.BACKUP': ['signatureOrSystem', 'control system back up and restore',
                "Allows the application to control the system\'s back-up and restore mechanism. Not for use by normal applications."
                ],
     'android.permission.CONFIRM_FULL_BACKUP': ['signature', '',
@@ -718,8 +706,7 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                                 'Allows an application to read and write the cache file system.'
                                 ],
     'android.permission.COPY_PROTECTED_DATA': ['signature',
-                            'Allows to invoke default container service to copy content. Not for use by normal applications.'
-                            ,
+                            'Allows to invoke default container service to copy content. Not for use by normal applications.',
                             'Allows to invoke default container service to copy content. Not for use by normal applications.'
                             ],
     'android.permission.CRYPT_KEEPER': ['signatureOrSystem',
@@ -727,25 +714,21 @@ DVM_PERMISSIONS = {'MANIFEST_PERMISSION': {  # COST_MONEY  (new added)
                      'Internal permission protecting access to the encryption methods'
                      ],
     'android.permission.READ_NETWORK_USAGE_HISTORY': ['signatureOrSystem',
-                                   'read historical network usage for specific networks and applications.'
-                                   ,
+                                   'read historical network usage for specific networks and applications.',
                                    'Allows an application to read historical network usage for specific networks and applications.'
                                    ],
     'android.permission.MANAGE_NETWORK_POLICY': ['signature',
-                              'manage network policies and to define application-specific rules.'
-                              ,
+                              'manage network policies and to define application-specific rules.',
                               'Allows an application to manage network policies and to define application-specific rules.'
                               ],
     'android.permission.MODIFY_NETWORK_ACCOUNTING': ['signatureOrSystem',
-                                  'account its network traffic against other UIDs.'
-                                  ,
+                                  'account its network traffic against other UIDs.',
                                   'Allows an application to account its network traffic against other UIDs.'
                                   ],
     'android.permission.C2D_MESSAGE': ['signature', 'C2DM permission.', 'C2DM permission.'
                     ],
     'android.permission.PACKAGE_VERIFICATION_AGENT': ['signatureOrSystem',
-                                   'Package verifier needs to have this permission before the PackageManager will trust it to verify packages.'
-                                   ,
+                                   'Package verifier needs to have this permission before the PackageManager will trust it to verify packages.',
                                    'Package verifier needs to have this permission before the PackageManager will trust it to verify packages.'
                                    ],
     'android.permission.BIND_PACKAGE_VERIFIER': ['signature', '',

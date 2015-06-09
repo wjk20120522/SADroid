@@ -7,6 +7,7 @@ from androguard.core.bytecodes import apk, dvm
 from androguard.core.analysis import analysis
 from cfg import graphAnalysis
 from androguard.core import androconf
+from risks.evaluation import Risk
 from androguard.util import read
 
 option_0 = {'name': ('-i', '--input'), 'help': 'filename input (dex, apk)', 'nargs': 1}
@@ -20,6 +21,16 @@ def main(options):
         a = apk.APK(options.input)
 
         if a.is_valid_APK():
+            info = a.get_information_about_apk()
+
+            '''
+            # get information about APK, for Chen zhichao
+            with open("info.xml", 'w') as f:
+                f.write(info)
+            '''
+            Risk.get_risk_evaluation(a)
+            return
+
             vm = dvm.DalvikVMFormat(a.get_dex())
         else:
             print 'INVALID APK'

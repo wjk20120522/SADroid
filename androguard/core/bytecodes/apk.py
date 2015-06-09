@@ -90,6 +90,23 @@ class APK(object):
                 except:
                     pass
 
+    def get_information_about_apk(self):
+
+        info = '<?xml version="1.0" encoding="UTF-8"?>\n'
+
+        # root tag
+        info += '<apk>\n'
+        info += '<package name = "%s">\n' % self.package
+        info += '</package>\n'
+        info += '<use-permission> \n'
+        for permission in self.get_no_duplicate_permission():
+            info += '<permission name = "%s">\n ' % permission
+            info += '</permission>\n'
+
+        info += '</use-permission> \n'
+        info += '</apk>'
+        return info
+
     def get_AndroidManifest(self):
         """
             Return the Android Manifest XML file
@@ -303,6 +320,14 @@ class APK(object):
             if permission not in self.no_duplicate_permission:
                 self.no_duplicate_permission.append(permission)
         return self.no_duplicate_permission
+
+    def get_system_permission(self):
+        no_duplicates = self.get_no_duplicate_permission()
+        system_permissions = []
+        for permission in no_duplicates:
+            if permission.find("android.permission.") == 0 or permission.find("com.android.") == 0:
+                system_permissions.append(permission)
+        return system_permissions
 
     def get_details_permissions(self):
         """
