@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-sys.path.append("/Users/wjk/Desktop/SADroid/")
+import os
+sys.path.append(os.path.pardir)
 
 from androguard.core.bytecodes import apk, dvm
 from androguard.core.analysis import analysis
