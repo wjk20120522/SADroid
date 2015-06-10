@@ -9,4 +9,6 @@ tools/*
 *~
 *.txt
 *.pyc
-.DS_Store
+*.DS_Store
+**/.DS_Store
+risks/input_apks/*
