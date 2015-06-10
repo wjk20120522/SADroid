@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 from optparse import OptionParser
 from androguard.core.bytecodes import apk, dvm
 from androguard.core.analysis import analysis
 from cfg import graphAnalysis
 from androguard.core import androconf
-from risks.evaluation import Risk
 from apk_info.apk_info import ApkInfo
 
 from androguard.util import read
@@ -20,6 +18,7 @@ options_io = [option_0, option_1]
 def main(options):
     if options.input is not None and options.output is not None:
         vm = None
+
         a = apk.APK(options.input)
 
         if a.is_valid_APK():
@@ -33,8 +32,6 @@ def main(options):
         '''
         ApkInfo.get_info(a)
         '''
-        Risk.get_risk_evaluation(a, vmx)
-
         gvmx = graphAnalysis.GVMAnalysis(vmx, a)
 
         b = gvmx.export_to_gexf()

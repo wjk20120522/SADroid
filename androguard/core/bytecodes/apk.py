@@ -61,7 +61,10 @@ class APK(object):
         self.__raw = read(filename)
 
         import zipfile
-        self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw))
+        try:
+            self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw))
+        except:
+            return
 
         for i in self.zip.namelist():
             if i == 'AndroidManifest.xml':
