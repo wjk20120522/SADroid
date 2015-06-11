@@ -41,8 +41,8 @@ def main(input_output):
     for root, dirs, files in os.walk(path):
 
         for f in files:
-            print f + "-------"
-            a = apk.APK(path + f)
+
+            a = apk.APK(root + os.sep + f)
 
             if a.is_valid_APK():
                 vm = dvm.DalvikVMFormat(a.get_dex())
