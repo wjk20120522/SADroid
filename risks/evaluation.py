@@ -16,12 +16,13 @@ option_1 = {'name': ('-o', '--output'), 'help': 'directory of output', 'nargs': 
 
 options_io = [option_0, option_1]
 
-def get_risk_evaluation(a, vm, output):     # APK and VmAnalysis
+def get_risk_evaluation(a, vm, output, count):     # APK and VmAnalysis
         risk = a.get_system_actions()
         permissions = a.get_system_permission()
         load_library = analysis.is_dyn_code(vm)
 
-        with open(output + a.package + ".txt", 'w') as f:
+        # with open(output + a.package + ".txt", 'w') as f:
+        with open(output + str(count) + ".txt", 'w') as f:
             f.write("ACTION"+'\n')
             for action in risk:
                 f.write(action + '\n')
@@ -38,6 +39,7 @@ def main(input_output):
     # if input_output.input is not None and input_output.output is not None:
     path = input_output.input
 
+    count = 1
     for root, dirs, files in os.walk(path):
 
         for f in files:
@@ -47,7 +49,8 @@ def main(input_output):
             if a.is_valid_APK():
                 vm = dvm.DalvikVMFormat(a.get_dex())
                 vmx = analysis.VMAnalysis(vm)
-                get_risk_evaluation(a, vmx, input_output.output)
+                get_risk_evaluation(a, vmx, input_output.output, count)
+                count += 1
 
 
 if __name__ == "__main__":
