@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from optparse import OptionParser
-
 from androguard.core.bytecodes import apk, dvm
+from optparse import OptionParser
 from androguard.core.analysis import analysis
 from cfg import graphAnalysis
 from androguard.core import androconf
+
+
+class ApkInfo(object):
+
+    @staticmethod
+    def get_info(apk, output):
+        info = apk.get_information_about_apk()
+
+        with open(output, 'w') as f:
+            f.write(info)
+
 
 option_0 = {'name': ('-i', '--input'), 'help': 'filename input (dex, apk)', 'nargs': 1}
 option_1 = {'name': ('-o', '--output'), 'help': 'filename output of the gexf', 'nargs': 1}
@@ -25,18 +35,18 @@ def main(options):
             print 'INVALID APK'
             exit()
 
-        vmx = analysis.VMAnalysis(vm)
+        ApkInfo.get_info(a, options.output)
 
-        '''
-        ApkInfo.get_info(a)
-        '''
-        gvmx = graphAnalysis.GVMAnalysis(vmx, a)
+        return
 
-        b = gvmx.export_to_gexf()
-        androconf.save_to_disk(b, options.output)
-        # after all is done, test the time
-        print 'After all job of a application is done, the time is'
-        print time.strftime("%H:%M:%S", time.localtime())
+        # vmx = analysis.VMAnalysis(vm)
+        # gvmx = graphAnalysis.GVMAnalysis(vmx, a)
+        #
+        # b = gvmx.export_to_gexf()
+        # androconf.save_to_disk(b, options.output)
+        # # after all is done, test the time
+        # print 'After all job of a application is done, the time is'
+        # print time.strftime("%H:%M:%S", time.localtime())
 
 if __name__ == '__main__':
     # just test the cost time of each application
@@ -51,3 +61,5 @@ if __name__ == '__main__':
 
     (option_input_output, _) = parser.parse_args()
     main(option_input_output)
+
+

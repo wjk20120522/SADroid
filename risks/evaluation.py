@@ -8,7 +8,6 @@ sys.path.append(os.path.pardir)
 from androguard.core.bytecodes import apk, dvm
 from androguard.core.analysis import analysis
 from optparse import OptionParser
-import os
 
 
 option_0 = {'name': ('-i', '--input'), 'help': 'directory of apk', 'nargs': 1}
