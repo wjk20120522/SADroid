@@ -13,6 +13,7 @@ option_1 = {'name': ('-o', '--output'), 'help': 'filename output of the gexf', '
 
 options_io = [option_0, option_1]
 
+
 def main(options):
     if options.input is not None and options.output is not None:
         vm = None
@@ -27,9 +28,6 @@ def main(options):
 
         vmx = analysis.VMAnalysis(vm)
 
-        '''
-        ApkInfo.get_info(a)
-        '''
         gvmx = graphAnalysis.GVMAnalysis(vmx, a)
 
         b = gvmx.export_to_gexf()

@@ -5,8 +5,7 @@ import sys
 import os
 sys.path.append(os.path.pardir)
 
-from androguard.core.bytecodes import apk, dvm
-from androguard.core.analysis import analysis
+from androguard.core.bytecodes import apk
 from optparse import OptionParser
 
 
@@ -15,12 +14,11 @@ option_1 = {'name': ('-o', '--output'), 'help': 'directory of output', 'nargs': 
 
 options_io = [option_0, option_1]
 
-def get_risk_evaluation(a, vm, output, count):     # APK and VmAnalysis
+
+def get_risk_evaluation(a, output, count):      # APK and VmAnalysis
         risk = a.get_system_actions()
         permissions = a.get_system_permission()
-        load_library = analysis.is_dyn_code(vm)
 
-        # with open(output + a.package + ".txt", 'w') as f:
         with open(output + str(count) + ".txt", 'w') as f:
             f.write("ACTION"+'\n')
             for action in risk:
@@ -28,29 +26,34 @@ def get_risk_evaluation(a, vm, output, count):     # APK and VmAnalysis
             f.write("PERMISSION" + '\n')
             for permission in permissions:
                 f.write(permission+"\n")
-            if load_library:
-                f.write("Loadlibrary:True" + '\n')
-            else:
-                f.write("Loadlibrary:False" + '\n')
+            # if load_library:
+            #     f.write("Loadlibrary:True" + '\n')
+            # else:
+            #     f.write("Loadlibrary:False" + '\n')
 
 
 def main(input_output):
     # if input_output.input is not None and input_output.output is not None:
     path = input_output.input
 
-    count = 1
+    count = 1001
     for root, dirs, files in os.walk(path):
 
         for f in files:
+            if count < 1939:
+                count += 1
+                continue
 
+            print 'begin analysis the ' + str(count) + " file " + f
+            print '........................'
             a = apk.APK(root + os.sep + f)
 
             if a.is_valid_APK():
-                vm = dvm.DalvikVMFormat(a.get_dex())
-                vmx = analysis.VMAnalysis(vm)
-                get_risk_evaluation(a, vmx, input_output.output, count)
+                # vm = dvm.DalvikVMFormat(a.get_dex())
+                # vmx = analysis.VMAnalysis(vm)
+                get_risk_evaluation(a, input_output.output, count)
+                print 'end analysis the ' + str(count) + " file"
                 count += 1
-
 
 if __name__ == "__main__":
 
