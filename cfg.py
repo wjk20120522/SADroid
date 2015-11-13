@@ -39,8 +39,8 @@ def main(options):
 if __name__ == '__main__':
     # just test the cost time of each application
     import time
-    print 'begin time of App'
-    print time.strftime("%H:%M:%S", time.localtime())
+    print 'begin time of App : %s' % time.strftime("%H:%M:%S", time.localtime())
+
     parser = OptionParser()
     for option in options_io:
         param = option['name']

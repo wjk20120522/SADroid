@@ -1,9 +1,9 @@
 jd-gui/*
 dex2jar/*
 EdgeMiner/*
-apk/*
 test/*
 output/*
+input/*
 .idea/*
 tools/*
 *~
