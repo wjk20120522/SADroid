@@ -56,6 +56,7 @@ class APK(object):
         self.permissions = []
         self.no_duplicate_permission = []
         self.valid_apk = False
+        # find onClick function and Button id in layout xml files
         self.xmlcallbacks = []
 
         self.__raw = read(filename)
@@ -63,7 +64,7 @@ class APK(object):
         import zipfile
         try:
             self.zip = zipfile.ZipFile(StringIO.StringIO(self.__raw))
-        except:
+        except IOError:
             return
 
         for i in self.zip.namelist():
@@ -79,9 +80,6 @@ class APK(object):
                     for item in self.xml[i].getElementsByTagName('uses-permission'):
                         self.permissions.append(str(item.getAttributeNS(NS_ANDROID_URI, 'name')))
                     self.valid_apk = True
-
-                    if not os.path.exists('output'):
-                        os.mkdir('output')
             elif i.find("res/layout/") != -1:   # find the onClick callback method in layout xml
                 try:
                     xml = minidom.parseString(AXMLPrinter(self.zip.read(i)).get_buff())
@@ -90,7 +88,7 @@ class APK(object):
                             buttonid = item.getAttributeNS(NS_ANDROID_URI, 'id')
                             if callback != "" and buttonid != "":
                                 self.xmlcallbacks.append([buttonid, callback])
-                except:
+                except IOError:
                     pass
 
     def get_information_about_apk(self):
@@ -110,14 +108,14 @@ class APK(object):
         info += '</apk>'
         return info
 
-    def get_AndroidManifest(self):
+    def get_androidmanifest(self):
         """
             Return the Android Manifest XML file
             :rtype: xml object
         """
         return self.xml['AndroidManifest.xml']
 
-    def is_valid_APK(self):
+    def is_valid_apk(self):
         """
             Return true if the APK is valid, false otherwise
             :rtype: boolean
@@ -161,6 +159,7 @@ class APK(object):
     def get_file(self, filename):
         """
             Return the raw data of the specified filename
+            :param filename a string which specify the filename
             :rtype: string
         """
         try:

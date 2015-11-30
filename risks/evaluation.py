@@ -36,13 +36,10 @@ def main(input_output):
     # if input_output.input is not None and input_output.output is not None:
     path = input_output.input
 
-    count = 1001
+    count = 1
     for root, dirs, files in os.walk(path):
 
         for f in files:
-            if count < 1939:
-                count += 1
-                continue
 
             print 'begin analysis the ' + str(count) + " file " + f
             print '........................'

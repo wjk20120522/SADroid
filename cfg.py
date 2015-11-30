@@ -20,7 +20,7 @@ def main(options):
 
         a = apk.APK(options.input)
 
-        if a.is_valid_APK():
+        if a.is_valid_apk():
             vm = dvm.DalvikVMFormat(a.get_dex())
         else:
             print 'INVALID APK'
