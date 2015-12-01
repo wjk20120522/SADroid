@@ -55,6 +55,7 @@ class APK(object):
         self.androidversion = {}
         self.permissions = []
         self.no_duplicate_permission = []
+        self.declared_permissions = {}
         self.valid_apk = False
         # find onClick function and Button id in layout xml files
         self.xmlcallbacks = []
@@ -70,7 +71,10 @@ class APK(object):
         for i in self.zip.namelist():
             if i == 'AndroidManifest.xml':
                 self.axml[i] = AXMLPrinter(self.zip.read(i))
-                self.xml[i] = minidom.parseString(self.axml[i].get_buff())
+                try:
+                    self.xml[i] = minidom.parseString(self.axml[i].get_buff())
+                except IOError:
+                    self.xml[i] = None
                 if self.xml[i]:
                     self.package = self.xml[i].documentElement.getAttribute('package')
                     self.androidversion['Code'] = \
@@ -79,7 +83,30 @@ class APK(object):
                         self.xml[i].documentElement.getAttributeNS(NS_ANDROID_URI, 'versionName')
                     for item in self.xml[i].getElementsByTagName('uses-permission'):
                         self.permissions.append(str(item.getAttributeNS(NS_ANDROID_URI, 'name')))
+
+                    # getting details of the declared permissions
+                    for d_perm_item in self.xml[i].getElementsByTagName('permission'):
+                        d_perm_name = self._get_res_string_value(str(
+                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "name")))
+                        d_perm_label = self._get_res_string_value(str(
+                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "label")))
+                        d_perm_description = self._get_res_string_value(str(
+                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "description")))
+                        d_perm_permission_group = self._get_res_string_value(str(
+                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "permissionGroup")))
+                        d_perm_protection_level = self._get_res_string_value(str(
+                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "protectionLevel")))
+
+                        d_perm_details = {
+                            "label": d_perm_label,
+                            "description": d_perm_description,
+                            "permissionGroup": d_perm_permission_group,
+                            "protectionLevel": d_perm_protection_level,
+                        }
+                        self.declared_permissions[d_perm_name] = d_perm_details
+
                     self.valid_apk = True
+
             elif i.find("res/layout/") != -1:   # find the onClick callback method in layout xml
                 try:
                     xml = minidom.parseString(AXMLPrinter(self.zip.read(i)).get_buff())
@@ -90,6 +117,20 @@ class APK(object):
                                 self.xmlcallbacks.append([buttonid, callback])
                 except IOError:
                     pass
+
+    def _get_res_string_value(self, string):
+        if not string.startswith('@string/'):
+            return string
+        string_key = string[9:]
+
+        res_parser = self.get_android_resources()
+        string_value = ''
+        for package_name in res_parser.get_packages_names():
+            extracted_values = res_parser.get_string(package_name, string_key)
+            if extracted_values:
+                string_value = extracted_values[1]
+                break
+        return string_value
 
     def get_information_about_apk(self):
 

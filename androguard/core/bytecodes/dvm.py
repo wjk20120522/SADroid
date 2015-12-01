@@ -7444,7 +7444,7 @@ class ClassManager(object):
        This class is used to access to all elements (strings, type, proto ...) of the dex format
     """
 
-    def __init__(self, vm):
+    def __init__(self, vm, config):
         self.vm = vm
         self.buff = vm
 
@@ -7461,8 +7461,12 @@ class ClassManager(object):
 
         self.__cached_proto = {}
 
-        self.recode_ascii_string = False
+        self.recode_ascii_string = config["RECODE_ASCII_STRING"]
         self.recode_ascii_string_meth = None
+        if config["RECODE_ASCII_STRING_METH"]:
+            self.recode_ascii_string_meth = config["RECODE_ASCII_STRING_METH"]
+
+        self.lazy_analysis = config["LAZY_ANALYSIS"]
 
         self.hook_strings = {}
 
@@ -7872,17 +7876,14 @@ class DalvikVMFormat(bytecode._Bytecode):
         self.config = {'RECODE_ASCII_STRING': CONF['RECODE_ASCII_STRING'],
                        'RECODE_ASCII_STRING_METH': CONF['RECODE_ASCII_STRING_METH'],
                        'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
-        self.CM = ClassManager(self)
-        self.classes_names = None
-        self.__cache_methods = None
-        self.__cached_methods_idx = None
+        self.CM = ClassManager(self, self.config)
         self._load()
         print "After put dalvik data to all data structure, it is the time :"
         import time
         print time.strftime("%H:%M:%S", time.localtime())
 
     def _load(self):
-        self.__header = HeaderItem(self, ClassManager(None))
+        self.__header = HeaderItem(self, ClassManager(None, self.config))
         if self.__header.map_off == 0:
             bytecode.Warning('no map list!!!')
             exit()
@@ -7895,6 +7896,11 @@ class DalvikVMFormat(bytecode._Bytecode):
             self.strings = self.map_list.get_item_type('TYPE_STRING_DATA_ITEM')
             self.debug = self.map_list.get_item_type('TYPE_DEBUG_INFO_ITEM')
             self.header = self.map_list.get_item_type('TYPE_HEADER_ITEM')
+
+        self.classes_names = None
+        self.__cache_methods = None
+        self.__cached_methods_idx = None
+        self.__cache_fields = None
 
     def get_classes_def_item(self):
         """
