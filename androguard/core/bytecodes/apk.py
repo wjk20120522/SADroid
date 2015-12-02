@@ -29,10 +29,20 @@ from xml.sax.saxutils import escape
 from zlib import crc32
 import re
 import os
+import sys
 
 from xml.dom import minidom
 
 NS_ANDROID_URI = 'http://schemas.android.com/apk/res/android'
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class FileNotPresent(Error):
+    pass
 
 
 ######################################################## APK FORMAT ########################################################
@@ -188,7 +198,26 @@ class APK(object):
         """
         :return: dex file
         """
-        return self.get_file('classes.dex')
+        try:
+            return self.get_file("classes.dex")
+        except FileNotPresent:
+            return ""
+
+    def get_all_dex(self):
+        """
+            Return the raw data of all classes dex files
+
+            :rtype: a generator
+        """
+        try:
+            yield self.get_file("classes.dex")
+
+            # Multidex support
+            basename = "classes%d.dex"
+            for i in xrange(2, sys.maxint):
+                yield self.get_file(basename % i)
+        except FileNotPresent:
+            pass
 
     def get_files(self):
         """
@@ -388,6 +417,22 @@ class APK(object):
                         'Unknown permission from android reference']
         return l
 
+    def get_declared_permissions(self):
+        """
+            Returns list of the declared permissions.
+
+            :rtype: list of strings
+        """
+        return self.declared_permissions.keys()
+
+    def get_declared_permissions_details(self):
+        """
+            Returns declared permissions with the details.
+
+            :rtype: dict
+        """
+        return self.declared_permissions
+
     def get_max_sdk_version(self):
         """
             Return the android:maxSdkVersion attribute
@@ -529,7 +574,13 @@ class APK(object):
         return None
 
     def show(self):
-        print 'PERMISSIONS: '
+
+        print "DECLARED PERMISSIONS:"
+        declared_permissions = self.get_declared_permissions()
+        for i in declared_permissions:
+            print "\t", i
+
+        print 'REQUESTED PERMISSIONS: '
         details_permissions = self.get_details_permissions()
         for i in details_permissions:
             print '\t', i, details_permissions[i]
@@ -558,160 +609,148 @@ class APK(object):
 
 ######################################################## AXML FORMAT ########################################################
 # Translated from http://code.google.com/p/android4me/source/browse/src/android/content/res/AXmlResourceParser.java
+UTF8_FLAG = 0x00000100
+CHUNK_STRINGPOOL_TYPE = 0x001C0001
+CHUNK_NULL_TYPE = 0x00000000
 
-UTF8_FLAG = 256
 
 class StringBlock(object):
 
     def __init__(self, buff):
         self.start = buff.get_idx()
         self._cache = {}
-        self.header = unpack('<h', buff.read(0x0002))[0x0000]
-        self.header_size = unpack('<h', buff.read(0x0002))[0x0000]
+        self.header_size, self.header = self.skipNullPadding(buff)
 
-        self.chunkSize = unpack('<i', buff.read(4))[0x0000]
-        self.stringCount = unpack('<i', buff.read(4))[0x0000]
-        self.styleOffsetCount = unpack('<i', buff.read(4))[0x0000]
+        self.chunkSize = unpack('<i', buff.read(4))[0]
+        self.stringCount = unpack('<i', buff.read(4))[0]
+        self.styleOffsetCount = unpack('<i', buff.read(4))[0]
 
-        self.flags = unpack('<i', buff.read(4))[0x0000]
-        self.m_isUTF8 = self.flags & UTF8_FLAG != 0x0000
+        self.flags = unpack('<i', buff.read(4))[0]
+        self.m_isUTF8 = ((self.flags & UTF8_FLAG) != 0)
 
-        self.stringsOffset = unpack('<i', buff.read(4))[0x0000]
-        self.stylesOffset = unpack('<i', buff.read(4))[0x0000]
+        self.stringsOffset = unpack('<i', buff.read(4))[0]
+        self.stylesOffset = unpack('<i', buff.read(4))[0]
 
         self.m_stringOffsets = []
         self.m_styleOffsets = []
-        self.m_strings = []
+        self.m_charbuff = ""
         self.m_styles = []
 
-        for i in range(0x0000, self.stringCount):
-            self.m_stringOffsets.append(unpack('<i',
-                    buff.read(4))[0x0000])
+        for i in range(0, self.stringCount):
+            self.m_stringOffsets.append(unpack('<i', buff.read(4))[0])
 
-        for i in range(0x0000, self.styleOffsetCount):
-            self.m_styleOffsets.append(unpack('<i',
-                    buff.read(4))[0x0000])
+        for i in range(0, self.styleOffsetCount):
+            self.m_styleOffsets.append(unpack('<i', buff.read(4))[0])
 
         size = self.chunkSize - self.stringsOffset
-        if self.stylesOffset != 0x0000:
+        if self.stylesOffset != 0:
             size = self.stylesOffset - self.stringsOffset
 
         # FIXME
+        if (size % 4) != 0:
+            androconf.warning("ooo")
 
-        if size % 4 != 0x0000:
-            androconf.warning('ooo')
+        self.m_charbuff = buff.read(size)
 
-        for i in range(0x0000, size):
-            self.m_strings.append(unpack('=b',
-                                  buff.read(0x0001))[0x0000])
-
-        if self.stylesOffset != 0x0000:
+        if self.stylesOffset != 0:
             size = self.chunkSize - self.stylesOffset
 
             # FIXME
+            if (size % 4) != 0:
+                androconf.warning("ooo")
 
-            if size % 4 != 0x0000:
-                androconf.warning('ooo')
+            for i in range(0, size / 4):
+                self.m_styles.append(unpack('<i', buff.read(4))[0])
 
-            for i in range(0x0000, size / 4):
-                self.m_styles.append(unpack('<i', buff.read(4))[0x0000])
+    def skipNullPadding(self, buff):
+
+        def readNext(buff, first_run=True):
+            header = unpack('<i', buff.read(4))[0]
+
+            if header == CHUNK_NULL_TYPE and first_run:
+                androconf.info("Skipping null padding in StringBlock header")
+                header = readNext(buff, first_run=False)
+            elif header != CHUNK_STRINGPOOL_TYPE:
+                androconf.warning("Invalid StringBlock header")
+
+            return header
+
+        header = readNext(buff)
+        return header >> 8, header & 0xFF
 
     def getString(self, idx):
         if idx in self._cache:
             return self._cache[idx]
 
-        if idx < 0x0000 or not self.m_stringOffsets or idx \
-            >= len(self.m_stringOffsets):
-            return ''
+        if idx < 0 or not self.m_stringOffsets or idx >= len(
+                self.m_stringOffsets):
+            return ""
 
         offset = self.m_stringOffsets[idx]
 
-        if not self.m_isUTF8:
-            length = self.getShort2(self.m_strings, offset)
-            offset += 0x0002
-            self._cache[idx] = self.decode(self.m_strings, offset,
-                    length)
+        if self.m_isUTF8:
+            self._cache[idx] = self.decode8(offset)
         else:
-            offset += self.getVarint(self.m_strings, offset)[0x0001]
-            varint = self.getVarint(self.m_strings, offset)
-
-            offset += varint[0x0001]
-            length = varint[0x0000]
-
-            self._cache[idx] = self.decode2(self.m_strings, offset,
-                    length)
+            self._cache[idx] = self.decode16(offset)
 
         return self._cache[idx]
 
     def getStyle(self, idx):
-        print idx
-        print idx in self.m_styleOffsets, self.m_styleOffsets[idx]
+        # FIXME
+        return self.m_styles[idx]
 
-        print self.m_styles[0x0000]
+    def decode8(self, offset):
+        str_len, skip = self.decodeLength(offset, 1)
+        offset += skip
 
-    def decode(
-        self,
-        array,
-        offset,
-        length,
-        ):
+        encoded_bytes, skip = self.decodeLength(offset, 1)
+        offset += skip
 
-        length = length * 0x0002
-        length = length + length % 0x0002
+        data = self.m_charbuff[offset: offset + encoded_bytes]
 
-        data = ''
+        return self.decode_bytes(data, 'utf-8', str_len)
 
-        for i in range(0x0000, length):
-            t_data = pack('=b', self.m_strings[offset + i])
-            data += unicode(t_data, errors='ignore')
-            if data[-0x0002:] == '\x00\x00':
-                break
+    def decode16(self, offset):
+        str_len, skip = self.decodeLength(offset, 2)
+        offset += skip
 
-        end_zero = data.find('\x00\x00')
-        if end_zero != -0x0001:
-            data = data[:end_zero]
+        encoded_bytes = str_len * 2
 
-        return data.decode('utf-16', 'replace')
+        data = self.m_charbuff[offset: offset + encoded_bytes]
 
-    def decode2(
-        self,
-        array,
-        offset,
-        length,
-        ):
+        return self.decode_bytes(data, 'utf-16', str_len)
 
-        data = ''
+    def decode_bytes(self, data, encoding, str_len):
+        string = data.decode(encoding, 'replace')
+        if len(string) != str_len:
+            androconf.warning("invalid decoded string length")
+        return string
 
-        for i in range(0x0000, length):
-            t_data = pack('=b', self.m_strings[offset + i])
-            data += unicode(t_data, errors='ignore')
+    def decodeLength(self, offset, sizeof_char):
+        length = ord(self.m_charbuff[offset])
 
-        return data.decode('utf-8', 'replace')
+        sizeof_2chars = sizeof_char << 1
+        fmt_chr = 'B' if sizeof_char == 1 else 'H'
+        fmt = "<2" + fmt_chr
 
-    def getVarint(self, array, offset):
-        val = array[offset]
-        more = val & 0x80 != 0x0000
-        val &= 0x7f
+        length1, length2 = unpack(fmt, self.m_charbuff[offset:(offset + sizeof_2chars)])
 
-        if not more:
-            return (val, 0x0001)
-        return (val << 8 | array[offset + 0x0001] & 255, 0x0002)
+        highbit = 0x80 << (8 * (sizeof_char - 1))
 
-    def getShort(self, array, offset):
-        value = array[offset / 4]
-        if offset % 4 / 0x0002 == 0x0000:
-            return value & 65535
+        if (length & highbit) != 0:
+            return ((length1 & ~highbit) << (8 * sizeof_char)) | length2, sizeof_2chars
         else:
-            return value >> 16
-
-    def getShort2(self, array, offset):
-        return (array[offset + 0x0001] & 255) << 8 | array[offset] & 255
+            return length1, sizeof_char
 
     def show(self):
-        print 'StringBlock', hex(self.start), hex(self.header), \
-            hex(self.header_size), hex(self.chunkSize), \
-            hex(self.stringsOffset), self.m_stringOffsets
-        for i in range(0x0000, len(self.m_stringOffsets)):
+        print "StringBlock(%x, %x, %x, %x, %x, %x" % (
+            self.start,
+            self.header,
+            self.header_size,
+            self.chunkSize,
+            self.stringsOffset,
+            self.flags)
+        for i in range(0, len(self.m_stringOffsets)):
             print i, repr(self.getString(i))
 
 
@@ -995,8 +1034,13 @@ class AXMLParser(object):
 
         if name == -0x0001:
             return ''
+        res = self.sb.getString(name)
+        if not res:
+            attr = self.m_resourceIDs[name]
+            if attr in SYSTEM_RESOURCES['attributes']['inverse']:
+                res = 'android:'+SYSTEM_RESOURCES['attributes']['inverse'][attr]
 
-        return self.sb.getString(name)
+        return res
 
     def getAttributeValueType(self, index):
         offset = self.getAttributeOffset(index)
@@ -1018,9 +1062,6 @@ class AXMLParser(object):
 
         return ''
 
-
-        # int valueData=m_attributes[offset+ATTRIBUTE_IX_VALUE_DATA];
-        # return TypedValue.coerceToString(valueType,valueData);
 
 TYPE_ATTRIBUTE = 0x0002
 TYPE_DIMENSION = 5
@@ -1713,7 +1754,7 @@ class ARSCResTableConfig(object):
 
         self.exceedingSize = self.size - 36
         if self.exceedingSize > 0x0000:
-            androconf.warning('too much bytes !')
+            androconf.info("Skipping padding bytes!")
             self.padding = buff.read(self.exceedingSize)
 
         # print "ARSCResTableConfig", hex(self.start), hex(self.size), hex(self.imsi), hex(self.locale), repr(self.get_language()), repr(self.get_country()), hex(self.screenType), hex(self.input), hex(self.screenSize), hex(self.version), hex(self.screenConfig), hex(self.screenSizeDp)

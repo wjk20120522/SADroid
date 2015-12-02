@@ -24,8 +24,10 @@ import logging
 import types
 import random
 import string
+from androguard.core.api_specific_resources.aosp_permissions.aosp_permissions import AOSP_PERMISSIONS
+from androguard.core.api_specific_resources.api_permission_mappings.api_permission_mappings import AOSP_PERMISSIONS_MAPPINGS
 
-ANDROGUARD_VERSION = '2.0'
+ANDROGUARD_VERSION = '3.0-dev'
 
 
 def is_ascii_problem(s):
@@ -365,3 +367,19 @@ def color_range(startcolor, goalcolor, steps):
     goal_tuple = make_color_tuple(goalcolor)
 
     return interpolate_tuple(start_tuple, goal_tuple, steps)
+
+
+def load_api_specific_resource_module(resource_name, api):
+    if resource_name == "aosp_permissions":
+        module = AOSP_PERMISSIONS
+    elif resource_name == "api_permission_mappings":
+        module = AOSP_PERMISSIONS_MAPPINGS
+    else:
+        error("Invalid resource: %s" % resource_name)
+
+    if not api:
+        api = CONF["DEFAULT_API"]
+    value = module.get(api)
+    if value:
+        return value
+    return module.get('9')

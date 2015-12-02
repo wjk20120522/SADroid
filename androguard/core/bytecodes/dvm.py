@@ -233,31 +233,21 @@ def readuleb128p1(buff):
 
 
 def readsleb128(buff):
-    result = unpack('=b', buff.read(1))[0]
+    result = 0
+    shift = 0
 
-    if result <= 0x7f:
-        result = result << 0x19
-        if result > 0x7fffffff:
-            result = (0x7fffffff & result) - 0x80000000
-        result = result >> 0x19
-    else:
-        cur = unpack('=b', buff.read(1))[0]
-        result = result & 0x7f | (cur & 0x7f) << 0x07
-        if cur <= 0x7f:
-            result = result << 0x12 >> 0x12
-        else:
-            cur = unpack('=b', buff.read(1))[0]
-            result |= (cur & 0x7f) << 0x0e
-            if cur <= 0x7f:
-                result = result << 0x0b >> 0x0b
-            else:
-                cur = unpack('=b', buff.read(1))[0]
-                result |= (cur & 0x7f) << 0x15
-                if cur <= 0x7f:
-                    result = result << 4 >> 4
-                else:
-                    cur = unpack('=b', buff.read(1))[0]
-                    result |= cur << 0x1c
+    for x in range(0, 5):
+        cur = ord(buff.read(1))
+        result |= (cur & 0x7f) << shift
+        shift += 7
+
+        if not cur & 0x80:
+            bit_left = max(32 - shift, 0)
+            result = result << bit_left
+            if result > 0x7fffffff:
+                result = (0x7fffffff & result) - 0x80000000
+            result = result >> bit_left
+            break
 
     return result
 
@@ -528,11 +518,14 @@ class HeaderItem(object):
         self.class_defs_size = len(self.class_off_obj.class_def)
         self.class_defs_off = self.class_off_obj.get_off()
 
-      # self.data_size = len(self.data_off_obj)
+        # self.data_size = len(self.data_off_obj)
+        # TODO: buggy
+        # self.data_off = self.data_off_obj[0].get_off()
 
-        self.data_off = self.data_off_obj[0].get_off()
+        self.data_size = len(self.data_off_obj.map_item)
+        self.data_off = self.data_off_obj.get_off()
 
-        return pack('=Q', self.magic) + pack('=I', self.checksum) \
+        return pack('=Q', self.magic) + pack('=i', self.checksum) \
             + pack('=20s', self.signature) + pack('=I', self.file_size) \
             + pack('=I', self.header_size) + pack('=I',
                 self.endian_tag) + pack('=I', self.link_size) \
@@ -4338,9 +4331,11 @@ class FillArrayData(object):
         self.element_width = unpack('=H', buff[2:4])[0]
         self.size = unpack('=I', buff[4:8])[0]
 
-        self.data = \
-            buff[self.format_general_size:self.format_general_size
-            + self.size * self.element_width + 1]
+        buf_len = self.size * self.element_width
+        if buf_len % 2:
+            buf_len += 1
+
+        self.data = buff[self.format_general_size:self.format_general_size + buf_len]
 
     def add_note(self, msg):
         """
@@ -6305,7 +6300,7 @@ DALVIK_OPCODES_FORMAT = {  # unused
     0x1e: [Instruction11x, ['monitor-exit']],
     0x1f: [Instruction21c, ['check-cast', KIND_TYPE]],
     0x20: [Instruction22c, ['instance-of', KIND_TYPE]],
-    0x21: [Instruction12x, ['array-length', KIND_TYPE]],
+    0x21: [Instruction12x, ['array-length']],
     0x22: [Instruction21c, ['new-instance', KIND_TYPE]],
     0x23: [Instruction22c, ['new-array', KIND_TYPE]],
     0x24: [Instruction35c, ['filled-new-array', KIND_TYPE]],
@@ -7432,6 +7427,7 @@ class MapItem(object):
     def get_size(self):
         return self.size
 
+
 class OffObj(object):
 
     def __init__(self, o):
@@ -8153,7 +8149,6 @@ class DalvikVMFormat(bytecode._Bytecode):
                 l.append(j)
         return l
 
-
     def get_len_methods(self):
         """
           Return the number of methods
@@ -8204,17 +8199,14 @@ class DalvikVMFormat(bytecode._Bytecode):
 
         key = class_name + method_name + descriptor
 
-        if self.__cache_methods == None:
+        if self.__cache_methods is None:
             self.__cache_methods = {}
             for i in self.classes.class_def:
                 for j in i.get_methods():
                     self.__cache_methods[j.get_class_name()
                             + j.get_name() + j.get_descriptor()] = j
 
-        try:
-            return self.__cache_methods[key]
-        except KeyError:
-            return None
+        return self.__cache_methods.get(key)
 
     def get_methods_descriptor(self, class_name, method_name):
         """
@@ -8292,13 +8284,16 @@ class DalvikVMFormat(bytecode._Bytecode):
             :rtype: None or a :class:`EncodedField` object
         """
 
-        for i in self.classes.class_def:
-            if class_name == i.get_name():
+        key = class_name + field_name + descriptor
+
+        if self.__cache_fields is None:
+            self.__cache_fields = {}
+            for i in self.classes.class_def:
                 for j in i.get_fields():
-                    if field_name == j.get_name() and descriptor \
-                        == j.get_descriptor():
-                        return j
-        return None
+                    self.__cache_fields[j.get_class_name() + j.get_name() +
+                                        j.get_descriptor()] = j
+
+        return self.__cache_fields.get(key)
 
     def get_strings(self):
         """

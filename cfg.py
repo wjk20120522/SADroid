@@ -26,12 +26,12 @@ def main(options):
             print 'INVALID APK'
             exit()
 
-        vmx = analysis.VMAnalysis(vm)
+        vmx = analysis.newVMAnalysis(vm)
 
-        gvmx = graphAnalysis.GVMAnalysis(vmx, a)
+        # gvmx = graphAnalysis.GVMAnalysis(vmx, a)
 
-        b = gvmx.export_to_gexf()
-        androconf.save_to_disk(b, options.output)
+        # b = gvmx.export_to_gexf()
+        # androconf.save_to_disk(b, options.output)
         # after all is done, test the time
         print 'After all job of a application is done, the time is'
         print time.strftime("%H:%M:%S", time.localtime())
