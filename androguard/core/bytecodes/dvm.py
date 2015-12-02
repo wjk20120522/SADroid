@@ -86,6 +86,15 @@ TYPE_DESCRIPTOR = {
     }
 
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class InvalidInstruction(Error):
+    pass
+
+
 def get_access_flags_string(value):
     """
       Transform an access flags to the corresponding string

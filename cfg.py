@@ -15,7 +15,7 @@ options_io = [option_0, option_1]
 
 
 def main(options):
-    if options.input is not None and options.output is not None:
+    if options.input is not None:
         vm = None
 
         a = apk.APK(options.input)
@@ -27,6 +27,14 @@ def main(options):
             exit()
 
         vmx = analysis.newVMAnalysis(vm)
+        vmx.create_xref()
+
+        for current_class in vm.get_classes():
+            print vmx.classes[current_class.get_name()].__str__()
+
+
+        # with open('output_xref_file.txt', 'w') as f:
+        #     f.write(rexf)
 
         # gvmx = graphAnalysis.GVMAnalysis(vmx, a)
 

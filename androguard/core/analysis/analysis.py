@@ -663,11 +663,11 @@ class ClassAnalysis(object):
             self._methods[method1] = MethodClassAnalysis(method1)
         self._methods[method1].AddXrefFrom(classobj, method2, offset)
 
-    def AddXrefTo(self, ref_kind, classobj, methodobj):
-        self.xrefto[classobj].add((ref_kind, methodobj))
+    def AddXrefTo(self, ref_kind, classobj, methodobj, offset):
+        self.xrefto[classobj].add((ref_kind, methodobj, offset))
 
-    def AddXrefFrom(self, ref_kind, classobj, methodobj):
-        self.xreffrom[classobj].add((ref_kind, methodobj))
+    def AddXrefFrom(self, ref_kind, classobj, methodobj, offset):
+        self.xreffrom[classobj].add((ref_kind, methodobj, offset))
 
     def get_xref_from(self):
         return self.xreffrom
