@@ -7530,18 +7530,18 @@ class ClassManager(object):
         sdi = False
         if type_item == 'TYPE_STRING_DATA_ITEM':
             sdi = True
+        if c_item is not None:
+            if isinstance(c_item, list):
+                for i in c_item:
+                    goff = i.offset
+                    self.__manage_item_off.append(goff)
 
-        if isinstance(c_item, list):
-            for i in c_item:
-                goff = i.offset
-                self.__manage_item_off.append(goff)
+                    self.__obj_offset[i.get_off()] = i
 
-                self.__obj_offset[i.get_off()] = i
-
-                if sdi is True:
-                    self.__strings_off[goff] = i
-        else:
-            self.__manage_item_off.append(mi.get_offset())
+                    if sdi is True:
+                        self.__strings_off[goff] = i
+            else:
+                self.__manage_item_off.append(mi.get_offset())
 
     def get_code(self, idx):
         try:

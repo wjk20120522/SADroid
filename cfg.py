@@ -29,9 +29,6 @@ def main(options):
         vmx = analysis.newVMAnalysis(vm)
         vmx.create_xref()
 
-        for current_class in vm.get_classes():
-            print vmx.classes[current_class.get_name()].__str__()
-
 
         # with open('output_xref_file.txt', 'w') as f:
         #     f.write(rexf)
