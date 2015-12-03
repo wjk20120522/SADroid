@@ -7893,7 +7893,7 @@ class DalvikVMFormat(bytecode._Bytecode):
             bytecode.Warning('no map list!!!')
             exit()
         else:
-            self.map_list = MapList(self.CM, self.__header.map_off,self)
+            self.map_list = MapList(self.CM, self.__header.map_off, self)
             self.classes = self.map_list.get_item_type('TYPE_CLASS_DEF_ITEM')
             self.methods = self.map_list.get_item_type('TYPE_METHOD_ID_ITEM')
             self.fields = self.map_list.get_item_type('TYPE_FIELD_ID_ITEM')
