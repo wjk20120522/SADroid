@@ -1,16 +1,5 @@
-androguard/core/bytecodes/*.pyc
-jd-gui/*
-dex2jar/*
-EdgeMiner/*
-test/*
 output/*
 input/*
 .idea/*
-tools/*
-*~
 *.txt
-cfg/*.pyc
-risks/*.pyc
 *.DS_Store
-**/.DS_Store
-risks/input_apks/*
