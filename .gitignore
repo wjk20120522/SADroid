@@ -2,4 +2,5 @@ output/*
 input/*
 .idea/*
 *.txt
+*.pyc
 *.DS_Store
