@@ -29,23 +29,12 @@ def main(options):
         vmx = analysis.newVMAnalysis(vm)
         vmx.create_xref()
 
-
-        # with open('output_xref_file.txt', 'w') as f:
-        #     f.write(rexf)
-
         # gvmx = graphAnalysis.GVMAnalysis(vmx, a)
 
         # b = gvmx.export_to_gexf()
         # androconf.save_to_disk(b, options.output)
-        # after all is done, test the time
-        print 'After all job of a application is done, the time is'
-        print time.strftime("%H:%M:%S", time.localtime())
 
 if __name__ == '__main__':
-    # just test the cost time of each application
-    import time
-    print 'begin time of App : %s' % time.strftime("%H:%M:%S", time.localtime())
-
     parser = OptionParser()
     for option in options_io:
         param = option['name']

@@ -103,7 +103,7 @@ def get_access_flags_string(value):
       :type value: int
 
       :rtype: string
-  """
+    """
 
     buff = ''
     for i in ACCESS_FLAGS:
@@ -169,7 +169,7 @@ BRANCH_DVM_OPCODES = [
 def clean_name_instruction(instruction):
     op_value = instruction.get_op_value()
     # goto range
-    if   0x28 <= op_value <= 0x2a:
+    if 0x28 <= op_value <= 0x2a:
         return 'goto'
     return instruction.get_name()
 
@@ -178,8 +178,7 @@ def static_operand_instruction(instruction):
     buff = ''
 
     if isinstance(instruction, Instruction):
-
-      # get instructions without registers
+        # get instructions without registers
         for val in instruction.get_literals():
             buff += '%s' % val
 
@@ -265,32 +264,6 @@ def get_sbyte(buff):
     return unpack('=b', buff.read(1))[0]
 
 
-def readsleb128_2(buff):
-    result = get_sbyte(buff)
-    if result <= 0x7f:
-        result = result << 0x19 >> 0x19
-    else:
-        cur = get_sbyte(buff)
-        result = result & 0x7f | (cur & 0x7f) << 0x07
-        if cur <= 0x7f:
-            result = result << 0x12 >> 0x12
-        else:
-            cur = get_sbyte(buff)
-            result |= (cur & 0x7f) << 0x0e
-            if cur <= 0x7f:
-                result = result << 0x0b >> 0x0b
-            else:
-                cur = get_sbyte(buff)
-                result |= (cur & 0x7f) << 0x15
-                if cur <= 0x7f:
-                    result = result << 4 >> 4
-                else:
-                    cur = get_sbyte(buff)
-                    result |= cur << 0x1c
-
-    return result
-
-
 def writeuleb128(value):
     remaining = value >> 0x07
 
@@ -307,8 +280,7 @@ def writeuleb128(value):
 
 def writesleb128(value):
     remaining = value >> 0x07
-    hasMore = True
-    end = 0
+    has_more = True
     buff = ''
 
     if value & -sys.maxint - 1 == 0:
@@ -316,10 +288,10 @@ def writesleb128(value):
     else:
         end = -1
 
-    while hasMore:
-        hasMore = remaining != end or remaining & 1 != value >> 6 & 1
+    while has_more:
+        has_more = remaining != end or remaining & 1 != value >> 6 & 1
         tmp = 0
-        if hasMore:
+        if has_more:
             tmp = 0x80
 
         buff += pack('=B', value & 0x7f | tmp)
@@ -345,7 +317,7 @@ def determineNext(i, end, m):
     elif 0x28 <= op_value <= 0x2a:
         off = i.get_ref_off() * 2
         return [off + end]
-     # if
+    # if
     elif 0x32 <= op_value <= 0x3d:
         off = i.get_ref_off() * 2
         return [end + i.get_length(), off + end]
@@ -404,8 +376,8 @@ def determineException(vm, m):  # m : EncodedMethod
             try_value = value[0]
 
             z = [try_value.get_start_addr() * 2,
-                 try_value.get_start_addr() * 2
-                 + try_value.get_insn_count() * 2 - 1]
+                 try_value.get_start_addr() * 2 +
+                 try_value.get_insn_count() * 2 - 1]
 
             handler_catch = value[1]
             if handler_catch.get_size() <= 0:
@@ -7877,9 +7849,6 @@ class DalvikVMFormat(bytecode._Bytecode):
                        'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
         self.CM = ClassManager(self, self.config)
         self._load()
-        print "After put dalvik data to all data structure, it is the time :"
-        import time
-        print time.strftime("%H:%M:%S", time.localtime())
 
     def _load(self):
         self.__header = HeaderItem(self, ClassManager(None, self.config))
