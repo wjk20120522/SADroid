@@ -3470,10 +3470,10 @@ class ClassDataItem(object):
                     self.static_fields[i].set_init_value(values[i])
 
     @staticmethod
-    def _load_elements(size, l, Type, buff, cm):
+    def _load_elements(size, l, field_or_method, buff, cm):
         prev = 0
         for i in xrange(0, size):
-            el = Type(buff, cm)
+            el = field_or_method(buff, cm)
             el.adjust_idx(prev)
 
             if isinstance(el, EncodedField):
@@ -6780,7 +6780,6 @@ class DCode(object):
 
         self.notes = {}
         self.cached_instructions = []
-        self.rcache = 0
 
         self.idx = 0
 
@@ -6814,6 +6813,11 @@ class DCode(object):
 
         self.idx = idx
 
+    def is_cached_instructions(self):
+        if self.cached_instructions:
+            return True
+        return False
+
     def set_instructions(self, instructions):
         """
           Set the instructions
@@ -6834,20 +6838,10 @@ class DCode(object):
             for i in self.cached_instructions:
                 yield i
         else:
-            if self.rcache >= 5:
-                lsa = LinearSweepAlgorithm()
-                for i in lsa.get_instructions(self.CM, self.size, self.insn, self.idx):
-                    self.cached_instructions.append(i)
-
-                for i in self.cached_instructions:
-                    yield i
-            else:
-                self.rcache += 1
-                if self.size >= 1000:
-                    self.rcache = 5
-                lsa = LinearSweepAlgorithm()
-                for i in lsa.get_instructions(self.CM, self.size, self.insn, self.idx):
-                    yield i
+            lsa = LinearSweepAlgorithm()
+            for i in lsa.get_instructions(self.CM, self.size, self.insn,
+                                          self.idx):
+                yield i
 
     def reload(self):
         pass
