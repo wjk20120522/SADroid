@@ -328,6 +328,7 @@ def writesleb128(value):
 
     return buff
 
+
 def determineNext(i, end, m):
     """
     :param i:   instruction
@@ -335,23 +336,21 @@ def determineNext(i, end, m):
     :param m:   EncodedMethod
     :return:    list of instruction
     """
-
     op_value = i.get_op_value()
 
     # throw + return*
-
-    if op_value == 0x27 or 0x0e <= op_value <= 0x11:
+    if (op_value == 0x27) or (0x0e <= op_value <= 0x11):
         return [-1]
+    # goto
     elif 0x28 <= op_value <= 0x2a:
-        # goto
         off = i.get_ref_off() * 2
         return [off + end]
+     # if
     elif 0x32 <= op_value <= 0x3d:
-    # if
         off = i.get_ref_off() * 2
         return [end + i.get_length(), off + end]
-    elif op_value in (0x2b, 0x2c):
     # sparse/packed
+    elif op_value in (0x2b, 0x2c):
         x = [end + i.get_length()]
 
         code = m.get_code().get_bc()

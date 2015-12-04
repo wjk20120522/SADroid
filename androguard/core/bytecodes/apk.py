@@ -125,7 +125,7 @@ class APK(object):
                             buttonid = item.getAttributeNS(NS_ANDROID_URI, 'id')
                             if callback != "" and buttonid != "":
                                 self.xmlcallbacks.append([buttonid, callback])
-                except IOError:
+                except:
                     pass
 
     def _get_res_string_value(self, string):
