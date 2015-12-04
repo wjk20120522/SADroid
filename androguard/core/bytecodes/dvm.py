@@ -2102,6 +2102,7 @@ class StringIdItem(object):
     def get_length(self):
         return len(self.get_obj())
 
+
 class TypeIdItem(object):
 
     """
@@ -7774,7 +7775,7 @@ class MapList(object):
         for i in xrange(0, self.size):
             idx = buff.get_idx()
 
-            mi = MapItem(buff, self.CM)
+            mi = MapItem(buff, self.CM)         # mi : MapItem
             self.map_item.append(mi)
 
             buff.set_idx(idx + mi.get_length())
