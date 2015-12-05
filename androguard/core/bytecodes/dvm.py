@@ -7299,7 +7299,8 @@ class MapItem(object):
 
     def next(self, buff, cm):
         if TYPE_MAP_ITEM[self.type] == 'TYPE_HEADER_ITEM':
-            self.item = HeaderItem(buff, cm)
+            pass
+            # self.item = HeaderItem(buff, cm)
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_ID_ITEM':
             self.item = [StringIdItem(buff, cm) for i in xrange(0, self.size)]
         elif TYPE_MAP_ITEM[self.type] == 'TYPE_STRING_DATA_ITEM':
@@ -7750,6 +7751,7 @@ class MapList(object):
                 mi.set_item(self)
                 c_item = mi.get_item()
 
+            # very important function
             self.CM.add_type_item(TYPE_MAP_ITEM[mi.get_type()], mi, c_item)
 
         for i in self.map_item:
