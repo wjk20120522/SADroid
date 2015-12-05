@@ -6699,24 +6699,19 @@ class LinearSweepAlgorithm(object):
 
                 if op_value in DALVIK_OPCODES_PAYLOAD:
                     try:
-                        obj = get_instruction_payload(op_value,
-                                insn[idx:])
+                        obj = get_instruction_payload(op_value, insn[idx:])
                         classic_instruction = False
                     except struct.error:
                         warning('error while decoding instruction ...')
                 elif op_value in DALVIK_OPCODES_EXTENDED_WIDTH:
-
                     try:
-                        obj = get_extented_instruction(cm, op_value,
-                                insn[idx:])
+                        obj = get_extented_instruction(cm, op_value, insn[idx:])
                         classic_instruction = False
                     except struct.error, why:
-                        warning('error while decoding instruction ...'
-                                + why.__str__())
+                        warning('error while decoding instruction ...' + why.__str__())
                 elif self.odex and op_value in DALVIK_OPCODES_OPTIMIZED:
                     # optimized instructions ?
-                    obj = get_optimized_instruction(cm, op_value,
-                            insn[idx:])
+                    obj = get_optimized_instruction(cm, op_value, insn[idx:])
                     classic_instruction = False
 
             # classical instructions
