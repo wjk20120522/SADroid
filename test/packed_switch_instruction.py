@@ -16,6 +16,7 @@ if __name__ == '__main__':
                 if a.is_valid_apk():
                     vm = dvm.DalvikVMFormat(a.get_dex())
                     vmx = analysis.newVMAnalysis(vm)
+                    vmx.create_xref()
                 else:
                     print 'Invalid Apk'
                     exit()
