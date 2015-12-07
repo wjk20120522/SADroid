@@ -3,6 +3,7 @@ import sys
 
 sys.path.append('../')
 from androguard.core.bytecodes import apk, dvm
+from androguard.core.analysis import analysis
 
 if __name__ == '__main__':
     for root, dirs, files in os.walk('../input'):
@@ -14,6 +15,7 @@ if __name__ == '__main__':
                 a = apk.APK(current_apk_file)
                 if a.is_valid_apk():
                     vm = dvm.DalvikVMFormat(a.get_dex())
+                    vmx = analysis.newVMAnalysis(vm)
                 else:
                     print 'Invalid Apk'
                     exit()

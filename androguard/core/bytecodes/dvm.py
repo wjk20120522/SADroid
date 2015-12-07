@@ -4576,7 +4576,10 @@ class PackedSwitch(object):
         idx = self.format_general_size
 
         max_size = self.size
+        print 'can go into the PackedSwitch function'
         if max_size * 4 > len(buff):
+            print 'it should not go to here'
+            exit()
             max_size = len(buff) - idx - 8
 
         for i in xrange(0, max_size):
