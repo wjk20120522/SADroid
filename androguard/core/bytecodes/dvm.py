@@ -4577,6 +4577,8 @@ class PackedSwitch(object):
 
         max_size = self.size
         if max_size * 4 > len(buff):
+            print 'it can not happen'
+            exit()
             max_size = len(buff) - idx - 8
 
         for i in xrange(0, max_size):
@@ -6681,6 +6683,10 @@ class LinearSweepAlgorithm(object):
             :rtype: a generator of :class:`Instruction` objects
         """
 
+        # wjk wjkwjk@mail.ustc.edu.cn
+        # if you want to see details about below, watch 'dalvik-bytecode', 'instruction-formats' in
+        # /dalvik/docs/ in Android 4.0 source code
+
         self.odex = cm.get_odex_format()
 
         max_idx = size * calcsize('=H')
@@ -6696,14 +6702,12 @@ class LinearSweepAlgorithm(object):
 
             op_value = unpack('=B', insn[idx])[0]
 
-            # print "%x %x" % (op_value, idx)
             # payload instructions or extented/optimized instructions
 
             if (op_value == 0 or op_value == 255) and idx + 2 < max_idx:
                 op_value = unpack('=H', insn[idx:idx + 2])[0]
 
-            # payload instructions ?
-
+                # payload instructions
                 if op_value in DALVIK_OPCODES_PAYLOAD:
                     try:
                         obj = get_instruction_payload(op_value, insn[idx:])
