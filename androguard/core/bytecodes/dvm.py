@@ -6310,6 +6310,7 @@ DALVIK_OPCODES_FORMAT = {  # unused
     0x3b: [Instruction21t, ['if-gez']],
     0x3c: [Instruction21t, ['if-gtz']],
     0x3d: [Instruction21t, ['if-lez']],
+    # unused
     0x3e: [Instruction10x, ['nop']],
     0x3f: [Instruction10x, ['nop']],
     0x40: [Instruction10x, ['nop']],
@@ -6363,12 +6364,14 @@ DALVIK_OPCODES_FORMAT = {  # unused
     0x70: [Instruction35c, ['invoke-direct', KIND_METH]],
     0x71: [Instruction35c, ['invoke-static', KIND_METH]],
     0x72: [Instruction35c, ['invoke-interface', KIND_METH]],
+    # unused
     0x73: [Instruction10x, ['nop']],
     0x74: [Instruction3rc, ['invoke-virtual/range', KIND_METH]],
     0x75: [Instruction3rc, ['invoke-super/range', KIND_METH]],
     0x76: [Instruction3rc, ['invoke-direct/range', KIND_METH]],
     0x77: [Instruction3rc, ['invoke-static/range', KIND_METH]],
     0x78: [Instruction3rc, ['invoke-interface/range', KIND_METH]],
+    # unused
     0x79: [Instruction10x, ['nop']],
     0x7a: [Instruction10x, ['nop']],
     0x7b: [Instruction12x, ['neg-int']],
@@ -6475,6 +6478,7 @@ DALVIK_OPCODES_FORMAT = {  # unused
     0xe0: [Instruction22b, ['shl-int/lit8']],
     0xe1: [Instruction22b, ['shr-int/lit8']],
     0xe2: [Instruction22b, ['ushr-int/lit8']],
+    # expanded opcodes
     0xe3: [Instruction22c, ['iget-volatile', KIND_FIELD]],
     0xe4: [Instruction22c, ['iput-volatile', KIND_FIELD]],
     0xe5: [Instruction21c, ['sget-volatile', KIND_FIELD]],
@@ -6507,8 +6511,11 @@ DALVIK_OPCODES_FORMAT = {  # unused
     0xfe: [Instruction21c, ['sput-object-volatile', KIND_FIELD]],
     }
 
-DALVIK_OPCODES_PAYLOAD = {256: [PackedSwitch], 512: [SparseSwitch],
-                          0x0300: [FillArrayData]}
+DALVIK_OPCODES_PAYLOAD = {
+    0x0100: [PackedSwitch],
+    0x0200: [SparseSwitch],
+    0x0300: [FillArrayData]
+}
 
 INLINE_METHODS = [
     ['Lorg/apache/harmony/dalvik/NativeTestTarget;', 'emptyInlineMethod'
