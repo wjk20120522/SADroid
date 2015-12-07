@@ -4576,6 +4576,7 @@ class PackedSwitch(object):
         idx = self.format_general_size
 
         max_size = self.size
+        print 'can go to here'
         if max_size * 4 > len(buff):
             print 'it can not happen'
             exit()
