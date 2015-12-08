@@ -4576,10 +4576,7 @@ class PackedSwitch(object):
         idx = self.format_general_size
 
         max_size = self.size
-        print 'can go into the PackedSwitch function'
         if max_size * 4 > len(buff):
-            print 'it should not go to here'
-            exit()
             max_size = len(buff) - idx - 8
 
         for i in xrange(0, max_size):
@@ -7504,18 +7501,18 @@ class ClassManager(object):
         sdi = False
         if type_item == 'TYPE_STRING_DATA_ITEM':
             sdi = True
-        if c_item is not None:
-            if isinstance(c_item, list):
-                for i in c_item:
-                    goff = i.offset
-                    self.__manage_item_off.append(goff)
 
-                    self.__obj_offset[i.get_off()] = i
+        if isinstance(c_item, list):
+            for i in c_item:
+                goff = i.offset
+                self.__manage_item_off.append(goff)
 
-                    if sdi is True:
-                        self.__strings_off[goff] = i
-            else:
-                self.__manage_item_off.append(mi.get_offset())
+                self.__obj_offset[i.get_off()] = i
+
+                if sdi is True:
+                    self.__strings_off[goff] = i
+        else:
+            self.__manage_item_off.append(mi.get_offset())
 
     def get_code(self, idx):
         try:
@@ -7752,7 +7749,7 @@ class MapList(object):
             self.map_item.append(mi)
 
             buff.set_idx(idx + mi.get_length())
-
+        
             c_item = mi.get_item()
             if not c_item:
                 mi.set_item(self)
