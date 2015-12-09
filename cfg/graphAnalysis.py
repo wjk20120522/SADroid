@@ -1125,7 +1125,7 @@ ID_ATTRIBUTES = {
     }
 
 
-class GVMAnalysis(object):
+class CFGAnalysis(object):
 
     def __init__(self, vmx, apk):
         self.vmx = vmx

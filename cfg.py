@@ -21,6 +21,7 @@ def main(options):
         if a.is_valid_apk():
             vmx = None
 
+            # multi-dex support
             for dex in a.get_all_dex():
                 vm = dvm.DalvikVMFormat(dex)
                 if i == 0:
@@ -28,10 +29,11 @@ def main(options):
                     vmx = analysis.NewVmAnalysis(vm)
                 else:
                     vmx.add(vm)
-                vmx.create_xref()
+            if vmx is not None:
+                g = graphAnalysis.CFGAnalysis(vmx, a)   # generate CFG
+                g.export_to_gexf()                      # export CFG to 'gexf' format file
 
-            # if vmx is not None:
-            #     vmx.create_xref()
+
         else:
             print 'INVALID APK'
             exit()
