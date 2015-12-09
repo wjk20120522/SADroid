@@ -717,6 +717,7 @@ class NewVmAnalysis(object):
         instances_class_name = self.classes.keys()
 
         last_vm = self.vms[-1]
+
         for current_class in last_vm.get_classes():
             for current_method in current_class.get_methods():
                 debug("Creating XREF for %s" % current_method)
@@ -735,9 +736,8 @@ class NewVmAnalysis(object):
                             type_info = last_vm.get_cm_type(idx_type)
 
                             # Internal xref related to class manipulation
-                            if type_info in instances_class_name and type_info != current_class.get_name(
-                            ):
-                                # new instance
+                            if type_info in instances_class_name and type_info != current_class.get_name():
+                                # new-instance vAA, type@BBBB
                                 if op_value == 0x22:
                                     self.classes[current_class.get_name(
                                     )].AddXrefTo(REF_NEW_INSTANCE,
@@ -747,7 +747,7 @@ class NewVmAnalysis(object):
                                         REF_NEW_INSTANCE,
                                         self.classes[current_class.get_name()],
                                         current_method, off)
-                                # class reference
+                                # const-class vAA, type@BBBB
                                 else:
                                     self.classes[current_class.get_name()].AddXrefTo(REF_CLASS_USAGE,
                                                                                      self.classes[type_info],
@@ -756,8 +756,8 @@ class NewVmAnalysis(object):
                                                                         self.classes[current_class.get_name()],
                                                                         current_method, off)
 
-                        elif ((op_value >= 0x6e and op_value <= 0x72) or
-                              (op_value >= 0x74 and op_value <= 0x78)):
+                        # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
+                        elif (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
                             idx_meth = instruction.get_ref_kind()
                             method_info = last_vm.get_cm_method(idx_meth)
                             if method_info:
@@ -788,7 +788,8 @@ class NewVmAnalysis(object):
                                             self.classes[current_class.get_name()],
                                             current_method, off)
 
-                        elif op_value >= 0x1a and op_value <= 0x1b:
+                        # const-string/jumbo vAA, string@BBBB
+                        elif 0x1a <= op_value <= 0x1b:
                             string_value = last_vm.get_cm_string(
                                 instruction.get_ref_kind())
                             if string_value not in self.strings:
@@ -798,15 +799,16 @@ class NewVmAnalysis(object):
                                 self.classes[current_class.get_name()],
                                 current_method)
 
-                        elif op_value >= 0x52 and op_value <= 0x6d:
+                        # sget, iget, sput, iput
+                        elif 0x52 <= op_value <= 0x6d:
                             idx_field = instruction.get_ref_kind()
                             field_info = last_vm.get_cm_field(idx_field)
                             field_item = last_vm.get_field_descriptor(
                                 field_info[0], field_info[2], field_info[1])
                             if field_item:
                                 # read access to a field
-                                if (op_value >= 0x52 and op_value <= 0x58) or (
-                                        op_value >= 0x60 and op_value <= 0x66):
+                                if (0x52 <= op_value <= 0x58) or (
+                                        0x60 <= op_value <= 0x66):
                                     self.classes[current_class.get_name(
                                     )].AddFXrefRead(
                                         current_method,

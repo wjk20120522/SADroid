@@ -2796,7 +2796,7 @@ class EncodedField(object):
         self.class_name = name[0]
         self.name = name[2]
         self.proto = ''.join(i for i in name[1])
-       
+
     def set_init_value(self, value):
         """
             Setup the init value object of the field
@@ -3419,8 +3419,7 @@ class ClassDataItem(object):
             :rtype: a list of :class:`EncodedMethod` objects
         """
 
-        return [x for x in self.direct_methods] + [x for x in
-                self.virtual_methods]
+        return [x for x in self.direct_methods] + [x for x in self.virtual_methods]
 
     def get_fields(self):
         """

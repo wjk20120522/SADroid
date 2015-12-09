@@ -28,9 +28,10 @@ def main(options):
                     vmx = analysis.NewVmAnalysis(vm)
                 else:
                     vmx.add(vm)
-
-            if vmx is not None:
                 vmx.create_xref()
+
+            # if vmx is not None:
+            #     vmx.create_xref()
         else:
             print 'INVALID APK'
             exit()
