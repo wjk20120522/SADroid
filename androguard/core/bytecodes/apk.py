@@ -45,8 +45,6 @@ class FileNotPresent(Error):
     pass
 
 
-######################################################## APK FORMAT ########################################################
-
 class APK(object):
     """
         This class can access to all elements in an APK file
@@ -210,6 +208,7 @@ class APK(object):
             :rtype: a generator
         """
         try:
+
             yield self.get_file("classes.dex")
 
             # Multidex support
@@ -235,7 +234,7 @@ class APK(object):
         try:
             return self.zip.read(filename)
         except KeyError:
-            return ''
+            raise FileNotPresent(filename)
 
     def get_elements(self, tag_name, attribute):
         """

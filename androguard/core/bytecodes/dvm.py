@@ -1953,6 +1953,7 @@ def utf8_to_string(buff, length):
 
     return ''.join(chars).encode('utf-8')
 
+
 class StringDataItem(object):
 
     """
@@ -2795,7 +2796,7 @@ class EncodedField(object):
         self.class_name = name[0]
         self.name = name[2]
         self.proto = ''.join(i for i in name[1])
-
+       
     def set_init_value(self, value):
         """
             Setup the init value object of the field
@@ -7532,7 +7533,7 @@ class ClassManager(object):
             if i.get_off() == off:
                 return i
 
-    def get_string(self, idx):  #id is index
+    def get_string(self, idx):  # id is index, not offset
         if idx in self.hook_strings:
             return self.hook_strings[idx]
         try:
@@ -7569,7 +7570,7 @@ class ClassManager(object):
             if i.get_type_list_off() == off:
                 return [type_.get_string() for type_ in i.get_list()]
 
-    def get_type(self, idx):    #idx is index
+    def get_type(self, idx):    # idx is index
         _type = self.__manage_item['TYPE_TYPE_ID_ITEM'].get(idx)
         if _type == -1:
             return 'AG:ITI: invalid type'

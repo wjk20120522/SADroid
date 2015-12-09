@@ -700,7 +700,7 @@ class ClassAnalysis(object):
         return data
 
 
-class newVMAnalysis(object):
+class NewVmAnalysis(object):
 
     def __init__(self, vm):
 

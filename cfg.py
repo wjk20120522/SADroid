@@ -16,23 +16,25 @@ options_io = [option_0, option_1]
 
 def main(options):
     if options.input is not None:
-        vm = None
-
         a = apk.APK(options.input)
-
+        i = 0
         if a.is_valid_apk():
-            vm = dvm.DalvikVMFormat(a.get_dex())
+            vmx = None
+
+            for dex in a.get_all_dex():
+                vm = dvm.DalvikVMFormat(dex)
+                if i == 0:
+                    i += 1
+                    vmx = analysis.NewVmAnalysis(vm)
+                else:
+                    vmx.add(vm)
+
+            if vmx is not None:
+                vmx.create_xref()
         else:
             print 'INVALID APK'
             exit()
 
-        vmx = analysis.newVMAnalysis(vm)
-        vmx.create_xref()
-
-        # gvmx = graphAnalysis.GVMAnalysis(vmx, a)
-
-        # b = gvmx.export_to_gexf()
-        # androconf.save_to_disk(b, options.output)
 
 if __name__ == '__main__':
     parser = OptionParser()
