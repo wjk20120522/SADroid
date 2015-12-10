@@ -1127,15 +1127,28 @@ ID_ATTRIBUTES = {
 
 class CFGAnalysis(object):
 
-    def __init__(self, vmx, apk):
+    def __init__(self, vmx, apk):  # vmx => NewVmAnalysis
         self.vmx = vmx
-        self.vm = self.vmx.get_vm()
+        self.vms = vmx.get_vms()
+        self.apk = apk
 
+        self.blocks = 0
         self.nodes = {}         # key => NodeF
         self.nodes_id = {}      # id => NodeF
         self.entry_nodes = []
         self.G = DiGraph()
         self.GI = DiGraph()
+
+        self.generate_block_points()
+
+    def generate_block_points(self):
+        for vm in self.vms:
+            for method in vm.get_methods():
+                g = self.vmx.get_method(vm, method)  # g => MethodAnalysis
+                # for block in g.basic_blocks.get():
+                self.blocks += len(g.basic_blocks.bb)
+
+    def generate_cfg(self, vmx, apk):
 
         for j in self.vmx.tainted_packages.get_internal_packages():     # j: PathP
             (src_class_name, src_method_name, src_descriptor) = j.get_src(self.vm.get_class_manager())

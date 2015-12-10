@@ -31,15 +31,15 @@ def main(options):
                     vmx.add(vm)
             if vmx is not None:
                 g = graphAnalysis.CFGAnalysis(vmx, a)   # generate CFG
-                g.export_to_gexf()                      # export CFG to 'gexf' format file
-
+                # g.export_to_gexf()                      # export CFG to 'gexf' format file
 
         else:
             print 'INVALID APK'
-            exit()
 
 
 if __name__ == '__main__':
+    from time import clock
+    start = clock()
     parser = OptionParser()
     for option in options_io:
         param = option['name']
@@ -48,3 +48,6 @@ if __name__ == '__main__':
 
     (option_input_output, _) = parser.parse_args()
     main(option_input_output)
+    end = clock()
+    print 'Analyzing one apk time consumes : ' + str(end-start) + "s"
+

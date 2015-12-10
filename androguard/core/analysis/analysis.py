@@ -20,6 +20,7 @@ from androguard.core.bytecodes import dvm
 from androguard.core.bytecodes.api_permissions import DVM_PERMISSIONS_BY_PERMISSION, \
     DVM_PERMISSIONS_BY_ELEMENT
 
+
 class DVMBasicBlock(object):
     """
         A simple basic block of a dalvik method
@@ -280,8 +281,7 @@ class BasicBlocks(object):
         This class represents all basic blocks of a method
     """
 
-    def __init__(self, _vm):
-        self.__vm = _vm
+    def __init__(self):
         self.bb = []
 
     def push(self, bb):
@@ -346,8 +346,7 @@ class ExceptionAnalysis(object):
 
 class Exceptions(object):
 
-    def __init__(self, _vm):
-        self.__vm = _vm
+    def __init__(self):
         self.exceptions = []
 
     def add(self, exceptions, basic_blocks):
@@ -390,8 +389,8 @@ class MethodAnalysis(object):
         self.__vm = vm              # DalvikVMFormat
         self.method = method        # EncodedMethod
 
-        self.basic_blocks = BasicBlocks(self.__vm)
-        self.exceptions = Exceptions(self.__vm)
+        self.basic_blocks = BasicBlocks()
+        self.exceptions = Exceptions()
 
         code = self.method.get_code()   # code:DalvikCode
         if code is None:
@@ -420,7 +419,7 @@ class MethodAnalysis(object):
             idx += i.get_length()
 
         debug('Parsing exceptions')
-        excepts = dvm.determineNext(self.__vm, self.method)
+        excepts = dvm.determineException(self.__vm, self.method)
         for i in excepts:
             l.extend([i[0]])
             for handler in i[2:]:
@@ -508,14 +507,6 @@ class MethodAnalysis(object):
                     method.get_name(), method.get_descriptor()
                 for context in methods[method]:
                     print '\t\t\t |---|', context.details
-
-    def get_tags(self):
-        """
-          Return the tags of the method
-
-          :rtype: a :class:`Tags` object
-        """
-        return self.tags    # TODO: buggy
 
 
 class StringAnalysis(object):
@@ -832,6 +823,9 @@ class NewVmAnalysis(object):
                 return MethodAnalysis(vm, method)
         return None
 
+    def get_method(self, vm, method):
+        return MethodAnalysis(vm, method)
+
     def get_method_by_name(self, class_name, method_name, method_descriptor):
         if class_name in self.classes:
             for method in self.classes[class_name].get_vm_class().get_methods():
@@ -873,6 +867,8 @@ class NewVmAnalysis(object):
             if current_class.get_name() not in self.classes:
                 self.classes[current_class.get_name()] = ClassAnalysis(current_class)
 
+    def get_vms(self):
+        return self.vms
 
 def is_ascii_obfuscation(vm):
     for classe in vm.get_classes():
