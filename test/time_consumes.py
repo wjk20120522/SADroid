@@ -36,7 +36,7 @@ if __name__ == '__main__':
                             end = clock()
                             print current_apk_file + " consumes : " + str(end-start) + "s"
                             f.write(current_apk_file + " consumes : " + str(end-start) + "s " +
-                                    "blocks numbers is : " + str(g.blocks))
+                                    "blocks numbers is : " + str(g.blocks) + '\n')
                 else:
                     print 'INVALID APK'
 
