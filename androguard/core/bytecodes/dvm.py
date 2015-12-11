@@ -163,7 +163,7 @@ BRANCH_DVM_OPCODES = [
     'return.',
     'packed-switch$',
     'sparse-switch$',
-    ]
+]
 
 
 def clean_name_instruction(instruction):
@@ -341,7 +341,6 @@ def determineNext(i, end, m):
 def determineException(vm, m):  # m : EncodedMethod
 
     # no exceptions !
-
     if m.get_code().get_tries_size() <= 0:
         return []
 

@@ -401,7 +401,6 @@ class MethodAnalysis(object):
         current_basic = DVMBasicBlock(0, self.__vm, self.method, self.basic_blocks)
         self.basic_blocks.push(current_basic)   # each element's type is DVMBasicBlock
 
-        # #########################################################
         # bc is 'DCode' object
         bc = code.get_bc()
         l = []
