@@ -1132,21 +1132,42 @@ class CFGAnalysis(object):
         self.vms = vmx.get_vms()
         self.apk = apk
 
-        self.blocks = 0
+        self.block_number = 0
+        self.blocks = {}
+
         self.nodes = {}         # key => NodeF
         self.nodes_id = {}      # id => NodeF
         self.entry_nodes = []
         self.G = DiGraph()
         self.GI = DiGraph()
 
-        self.generate_block_points()
+    def export_to_dot(self):
+        buff = "digraph CFG {\n"
+        buff += self.generate_block_points()
+        buff += self.generate_block_edges()
+        buff += "}"
+        return buff
 
     def generate_block_points(self):
+        buff = ""
         for vm in self.vms:
             for method in vm.get_methods():
                 g = self.vmx.get_method(vm, method)  # g => MethodAnalysis
-                # for block in g.basic_blocks.get():
-                self.blocks += len(g.basic_blocks.bb)
+                # self.block_number += len(g.basic_blocks.bb)
+                for block in g.basic_blocks.get():
+                    buff += block.name + '\n'
+        return buff
+
+    def generate_block_edges(self):
+        buff = ""
+        for vm in self.vms:
+            for method in vm.get_methods():
+                g = self.vmx.get_method(vm, method)
+                for block in g.basic_blocks.get():
+                    for child_block in block.childs:
+                        buff += block.name + " -> " + child_block[2].get_name() + '\n'
+        return buff
+
 
     def generate_cfg(self, vmx, apk):
 

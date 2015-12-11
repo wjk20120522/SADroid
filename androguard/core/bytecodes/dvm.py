@@ -2212,7 +2212,9 @@ class ProtoIdItem(object):
         self.shorty_idx_value = self.__CM.get_string(self.shorty_idx)
         self.return_type_idx_value = self.__CM.get_type(self.return_type_idx)
         params = self.__CM.get_type_list(self.parameters_off)
-        self.parameters_off_value = '({})'.format(' '.join(params))
+        # do not need ' ' to distinguish between parameters
+        # self.parameters_off_value = '({})'.format(' '.join(params))
+        self.parameters_off_value = '({})'.format(''.join(params))
 
     def get_shorty_idx(self):
         """

@@ -27,9 +27,9 @@ class DVMBasicBlock(object):
     """
 
     def __init__(self, start, vm, method, context):
-        self.__vm = vm          #DalvikVMFormat
-        self.method = method    #EncodedMethod
-        self.context = context  #BasicBlocks
+        self.__vm = vm          # DalvikVMFormat
+        self.method = method    # EncodedMethod
+        self.context = context  # BasicBlocks
 
         self.last_length = 0
         self.nb_instructions = 0
@@ -42,7 +42,8 @@ class DVMBasicBlock(object):
 
         self.special_ins = {}
 
-        self.name = '%s-BB@0x%x' % (self.method.get_name(), self.start)
+        self.name = '%s@0x%x' % (self.method.get_class_name()+self.method.get_name() +
+                                 self.method.get_descriptor(), self.start)
 
         self.exception_analysis = None
 
@@ -80,7 +81,8 @@ class DVMBasicBlock(object):
         return self.method
 
     def get_name(self):
-        return '%s-BB@0x%x' % (self.method.get_name(), self.start)
+        return self.name
+        # return '%s-BB@0x%x' % (self.method.get_name(), self.start)
 
     def get_start(self):
         return self.start
