@@ -4718,7 +4718,7 @@ class Instruction35c(Instruction):
         self.F = i16 >> 0x0c & 15
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
 
         if self.A == 0:
@@ -4805,7 +4805,7 @@ class Instruction10x(Instruction):
       # log_andro.debug("OP:%x %s" % (self.OP, args[0]))
 
     def get_output(self, idx=-1):
-        return ''
+        return self.get_name()
 
     def get_operands(self, idx=-1):
         return []
@@ -4848,7 +4848,7 @@ class Instruction21h(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, %d' % (self.AA, self.BBBB)
 
         if self.formatted_operands != []:
@@ -4887,7 +4887,7 @@ class Instruction11n(Instruction):
       # log_andro.debug("OP:%x %s A:%x B:%x" % (self.OP, args[0], self.A, self.B))
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, %d' % (self.A, self.B)
         return buff
 
@@ -4926,9 +4926,8 @@ class Instruction21c(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
-
         buff += 'v%d, %s' % (self.AA, kind)
         return buff
 
@@ -4977,7 +4976,7 @@ class Instruction21s(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, %d' % (self.AA, self.BBBB)
 
         if self.formatted_operands != []:
@@ -5021,7 +5020,7 @@ class Instruction22c(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         kind = get_kind(self.cm, self.get_kind(), self.CCCC)
         buff += 'v%d, v%d, %s' % (self.A, self.B, kind)
         return buff
@@ -5061,7 +5060,7 @@ class Instruction22cs(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         kind = get_kind(self.cm, self.get_kind(), self.CCCC)
         buff += 'v%d, v%d, %s' % (self.A, self.B, kind)
         return buff
@@ -5099,7 +5098,7 @@ class Instruction31t(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, +%x (0x%x)' % (self.AA, self.BBBBBBBB,
                 self.BBBBBBBB * 2 + idx)
 
@@ -5138,7 +5137,7 @@ class Instruction31c(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBBBBBB)
         buff += 'v%d, %s' % (self.AA, kind)
@@ -5188,7 +5187,7 @@ class Instruction12x(Instruction):
         return 2
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d' % (self.A, self.B)
         return buff
 
@@ -5218,7 +5217,7 @@ class Instruction11x(Instruction):
         return 2
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d' % self.AA
         return buff
 
@@ -5256,7 +5255,7 @@ class Instruction51l(Instruction):
         return 0x0a
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         buff += 'v%d, %d' % (self.AA, self.BBBBBBBBBBBBBBBB)
 
@@ -5311,7 +5310,7 @@ class Instruction31i(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, %d' % (self.AA, self.BBBBBBBB)
 
         if self.formatted_operands:
@@ -5354,7 +5353,7 @@ class Instruction22x(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d' % (self.AA, self.BBBB)
         return buff
 
@@ -5389,7 +5388,7 @@ class Instruction23x(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d, v%d' % (self.AA, self.BB, self.CC)
         return buff
 
@@ -5421,7 +5420,7 @@ class Instruction20t(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += '%+x' % self.AAAA
         return buff
 
@@ -5456,7 +5455,7 @@ class Instruction21t(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, %+x' % (self.AA, self.BBBB)
         return buff
 
@@ -5489,7 +5488,7 @@ class Instruction10t(Instruction):
         return 2
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += '%+x' % self.AA
         return buff
 
@@ -5524,7 +5523,7 @@ class Instruction22t(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d, %+x' % (self.A, self.B, self.CCCC)
         return buff
 
@@ -5561,7 +5560,7 @@ class Instruction22s(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d, %d' % (self.A, self.B, self.CCCC)
         return buff
 
@@ -5599,7 +5598,7 @@ class Instruction22b(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d, %d' % (self.AA, self.BB, self.CC)
         return buff
 
@@ -5635,7 +5634,7 @@ class Instruction30t(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += '%+x' % self.AAAAAAAA
         return buff
 
@@ -5674,7 +5673,7 @@ class Instruction3rc(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
 
@@ -5726,7 +5725,7 @@ class Instruction32x(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d' % (self.AAAA, self.BBBB)
         return buff
 
@@ -5759,7 +5758,7 @@ class Instruction20bc(Instruction):
         return 4
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
         buff += '%d, %d' % (self.AA, self.BBBB)
         return buff
 
@@ -5796,7 +5795,7 @@ class Instruction35mi(Instruction):
       # log_andro.debug("OP:%x %s G:%x A:%x BBBB:%x C:%x D:%x E:%x F:%x" % (self.OP, args[0], self.G, self.A, self.BBBB, self.C, self.D, self.E, self.F))
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
 
@@ -5890,7 +5889,7 @@ class Instruction35ms(Instruction):
       # log_andro.debug("OP:%x %s G:%x A:%x BBBB:%x C:%x D:%x E:%x F:%x" % (self.OP, args[0], self.G, self.A, self.BBBB, self.C, self.D, self.E, self.F))
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
 
@@ -5984,7 +5983,7 @@ class Instruction3rmi(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
 
@@ -6041,7 +6040,7 @@ class Instruction3rms(Instruction):
         return 6
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBB)
 
@@ -6096,7 +6095,7 @@ class Instruction41c(Instruction):
     def get_output(self, idx=-1):
         kind = get_kind(self.cm, self.get_kind(), self.BBBBBBBB)
 
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, %s' % (self.AAAA, kind)
         return buff
 
@@ -6134,7 +6133,7 @@ class Instruction40sc(Instruction):
     def get_output(self, idx=-1):
         kind = get_kind(self.cm, self.get_kind(), self.BBBBBBBB)
 
-        buff = ''
+        buff = self.get_name() + " "
         buff += '%d, %s' % (self.AAAA, kind)
         return buff
 
@@ -6173,7 +6172,7 @@ class Instruction52c(Instruction):
     def get_output(self, idx=-1):
         kind = get_kind(self.cm, self.get_kind(), self.CCCCCCCC)
 
-        buff = ''
+        buff = self.get_name() + " "
         buff += 'v%d, v%d, %s' % (self.AAAA, self.BBBB, kind)
         return buff
 
@@ -6214,7 +6213,7 @@ class Instruction5rc(Instruction):
         return 0x0a
 
     def get_output(self, idx=-1):
-        buff = ''
+        buff = self.get_name() + " "
 
         kind = get_kind(self.cm, self.get_kind(), self.BBBBBBBB)
 
@@ -8124,7 +8123,11 @@ class DalvikVMFormat(bytecode._Bytecode):
           :rtype: a list of :class:`EncodedMethod` objects
         """
         l = []
+        # discard the methods of Android Frameworks packages
+
         for i in self.classes.class_def:
+            if i.name.find("Landroid/support/") != -1:
+                continue
             for j in i.get_methods():
                 l.append(j)
         return l

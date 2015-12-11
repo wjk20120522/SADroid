@@ -1155,7 +1155,7 @@ class CFGAnalysis(object):
                 g = self.vmx.get_method(vm, method)  # g => MethodAnalysis
                 # self.block_number += len(g.basic_blocks.bb)
                 for block in g.basic_blocks.get():
-                    buff += block.name + '\n'
+                    buff += '"' + block.name + '"' + '\n'
         return buff
 
     def generate_block_edges(self):
@@ -1165,9 +1165,8 @@ class CFGAnalysis(object):
                 g = self.vmx.get_method(vm, method)
                 for block in g.basic_blocks.get():
                     for child_block in block.childs:
-                        buff += block.name + " -> " + child_block[2].get_name() + '\n'
+                        buff += '"' + block.name + '"' + " -> " + '"' + child_block[2].get_name() + '"' + '\n'
         return buff
-
 
     def generate_cfg(self, vmx, apk):
 
