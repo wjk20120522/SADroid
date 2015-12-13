@@ -30,8 +30,11 @@ def main(options):
                 else:
                     vmx.add(vm)
             if vmx is not None:
-                g = graphAnalysis.CFGAnalysis(vmx, a)   # generate CFG
-                # g.export_to_gexf()                      # export CFG to 'gexf' format file
+                vmx.create_xref()
+                with open('graphviz.txt', 'w') as f:
+                    f.write(vmx.export_to_dot())
+                # g = graphAnalysis.CFGAnalysis(vmx, a)   # generate CF
+                # g.export_to_dot()
 
         else:
             print 'INVALID APK'

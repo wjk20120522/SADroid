@@ -8042,6 +8042,12 @@ class DalvikVMFormat(bytecode._Bytecode):
           :rtype: a list of :class:`ClassDefItem` objects
         """
         return self.classes.class_def
+        # ret = []
+        # for i in self.classes.class_def:
+        #     if i.name.find("Landroid/support") != -1:
+        #         continue
+        #     ret.append(i)
+        # return ret
 
     def get_class(self, name):
         """

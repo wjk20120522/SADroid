@@ -623,14 +623,14 @@ class ClassAnalysis(object):
 
     def __init__(self, classobj):
         self.orig_class = classobj
-        self._methods = {}
+        self.methods = {}
         self._fields = {}
 
         self.xrefto = collections.defaultdict(set)
         self.xreffrom = collections.defaultdict(set)
 
     def get_method_analysis(self, method):
-        return self._methods.get(method)
+        return self.methods.get(method)
 
     def get_field_analysis(self, field):
         return self._fields.get(field)
@@ -646,14 +646,14 @@ class ClassAnalysis(object):
         self._fields[field].AddXrefWrite(classobj, method)
 
     def AddMXrefTo(self, method1, classobj, method2, offset):
-        if method1 not in self._methods:
-            self._methods[method1] = MethodClassAnalysis(method1)
-        self._methods[method1].AddXrefTo(classobj, method2, offset)
+        if method1 not in self.methods:
+            self.methods[method1] = MethodClassAnalysis(method1)
+        self.methods[method1].AddXrefTo(classobj, method2, offset)
 
     def AddMXrefFrom(self, method1, classobj, method2, offset):
-        if method1 not in self._methods:
-            self._methods[method1] = MethodClassAnalysis(method1)
-        self._methods[method1].AddXrefFrom(classobj, method2, offset)
+        if method1 not in self.methods:
+            self.methods[method1] = MethodClassAnalysis(method1)
+        self.methods[method1].AddXrefFrom(classobj, method2, offset)
 
     def AddXrefTo(self, ref_kind, classobj, methodobj, offset):
         self.xrefto[classobj].add((ref_kind, methodobj, offset))
@@ -703,120 +703,149 @@ class NewVmAnalysis(object):
         for current_class in vm.get_classes():
             self.classes[current_class.get_name()] = ClassAnalysis(current_class)
 
+    def export_to_dot(self):
+        buff = "digraph CFG {\n"
+        # buff += self.generate_dots()
+        buff += self.generate_dot_edges()
+        buff += "\n}"
+        return buff
+
+    # def generate_dots(self):
+    #     buff = ""
+    #     for current_class in self.classes.keys():
+    #         for current_method in self.classes[current_class].methods.keys():
+    #             buff += '"'
+    #             buff += (current_method.get_class_name() + current_method.get_name() + current_method.get_descriptor())
+    #             buff += '"\n'
+    #     return buff
+
+    def generate_dot_edges(self):
+        buff = ""
+        for current_class in self.classes.keys():
+            current_class_analysis = self.classes[current_class]
+            for method in current_class_analysis.methods.keys():    # method -> EncodedMethod
+                class_method_analysis = current_class_analysis.methods[method]
+                for obj, met, off in class_method_analysis.xrefto:
+                    if method.get_class_name().find("Landroid/support/") != -1 and met.get_class_name().find("Landroid/support/") != -1:
+                        continue
+                    buff += '"' + (method.get_class_name() + method.get_name() + method.get_descriptor()) + '"' + ' -> '
+                    buff += '"' + (met.get_class_name() + met.get_name() + met.get_descriptor()) + '"'
+                    buff += '\n'
+        return buff
+
     def create_xref(self):
         debug("Creating XREF/DREF")
 
         instances_class_name = self.classes.keys()
 
-        last_vm = self.vms[-1]
+        for last_vm in self.vms:
+            for current_class in last_vm.get_classes():
+                for current_method in current_class.get_methods():
+                    debug("Creating XREF for %s" % current_method)
 
-        for current_class in last_vm.get_classes():
-            for current_method in current_class.get_methods():
-                debug("Creating XREF for %s" % current_method)
+                    code = current_method.get_code()
+                    if code is None:
+                        continue
 
-                code = current_method.get_code()
-                if code is None:
-                    continue
+                    off = 0
+                    bc = code.get_bc()
+                    try:
+                        for instruction in bc.get_instructions():
+                            op_value = instruction.get_op_value()
+                            if op_value in [0x1c, 0x22]:
+                                idx_type = instruction.get_ref_kind()
+                                type_info = last_vm.get_cm_type(idx_type)
 
-                off = 0
-                bc = code.get_bc()
-                try:
-                    for instruction in bc.get_instructions():
-                        op_value = instruction.get_op_value()
-                        if op_value in [0x1c, 0x22]:
-                            idx_type = instruction.get_ref_kind()
-                            type_info = last_vm.get_cm_type(idx_type)
-
-                            # Internal xref related to class manipulation
-                            if type_info in instances_class_name and type_info != current_class.get_name():
-                                # new-instance vAA, type@BBBB
-                                if op_value == 0x22:
-                                    self.classes[current_class.get_name(
-                                    )].AddXrefTo(REF_NEW_INSTANCE,
-                                                 self.classes[type_info],
-                                                 current_method, off)
-                                    self.classes[type_info].AddXrefFrom(
-                                        REF_NEW_INSTANCE,
-                                        self.classes[current_class.get_name()],
-                                        current_method, off)
-                                # const-class vAA, type@BBBB
-                                else:
-                                    self.classes[current_class.get_name()].AddXrefTo(REF_CLASS_USAGE,
-                                                                                     self.classes[type_info],
-                                                                                     current_method, off)
-                                    self.classes[type_info].AddXrefFrom(REF_CLASS_USAGE,
-                                                                        self.classes[current_class.get_name()],
-                                                                        current_method, off)
-
-                        # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
-                        elif (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
-                            idx_meth = instruction.get_ref_kind()
-                            method_info = last_vm.get_cm_method(idx_meth)
-                            if method_info:
-                                class_info = method_info[0]
-
-                                method_item = last_vm.get_method_descriptor(
-                                    method_info[0], method_info[1],
-                                    ''.join(method_info[2]))
-                                if method_item:
-                                    self.classes[current_class.get_name(
-                                    )].AddMXrefTo(current_method,
-                                                  self.classes[class_info],
-                                                  method_item, off)
-                                    self.classes[class_info].AddMXrefFrom(
-                                        method_item,
-                                        self.classes[current_class.get_name()],
-                                        current_method, off)
-
-                                    # Internal xref related to class manipulation
-                                    if class_info in instances_class_name and class_info != current_class.get_name(
-                                    ):
+                                # Internal xref related to class manipulation
+                                if type_info in instances_class_name and type_info != current_class.get_name():
+                                    # new-instance vAA, type@BBBB
+                                    if op_value == 0x22:
                                         self.classes[current_class.get_name(
-                                        )].AddXrefTo(REF_CLASS_USAGE,
-                                                     self.classes[class_info],
-                                                     method_item, off)
-                                        self.classes[class_info].AddXrefFrom(
-                                            REF_CLASS_USAGE,
+                                        )].AddXrefTo(REF_NEW_INSTANCE,
+                                                     self.classes[type_info],
+                                                     current_method, off)
+                                        self.classes[type_info].AddXrefFrom(
+                                            REF_NEW_INSTANCE,
+                                            self.classes[current_class.get_name()],
+                                            current_method, off)
+                                    # const-class vAA, type@BBBB
+                                    else:
+                                        self.classes[current_class.get_name()].AddXrefTo(REF_CLASS_USAGE,
+                                                                                         self.classes[type_info],
+                                                                                         current_method, off)
+                                        self.classes[type_info].AddXrefFrom(REF_CLASS_USAGE,
+                                                                            self.classes[current_class.get_name()],
+                                                                            current_method, off)
+
+                            # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
+                            elif (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
+                                idx_meth = instruction.get_ref_kind()
+                                method_info = last_vm.get_cm_method(idx_meth)
+                                if method_info:
+                                    class_info = method_info[0]
+
+                                    method_item = last_vm.get_method_descriptor(
+                                        method_info[0], method_info[1],
+                                        ''.join(method_info[2]))
+                                    if method_item:
+                                        self.classes[current_class.get_name(
+                                        )].AddMXrefTo(current_method,
+                                                      self.classes[class_info],
+                                                      method_item, off)
+                                        self.classes[class_info].AddMXrefFrom(
+                                            method_item,
                                             self.classes[current_class.get_name()],
                                             current_method, off)
 
-                        # const-string/jumbo vAA, string@BBBB
-                        elif 0x1a <= op_value <= 0x1b:
-                            string_value = last_vm.get_cm_string(
-                                instruction.get_ref_kind())
-                            if string_value not in self.strings:
-                                self.strings[string_value] = StringAnalysis(
-                                    string_value)
-                            self.strings[string_value].AddXrefFrom(
-                                self.classes[current_class.get_name()],
-                                current_method)
+                                        # Internal xref related to class manipulation
+                                        if class_info in instances_class_name and class_info != current_class.get_name(
+                                        ):
+                                            self.classes[current_class.get_name(
+                                            )].AddXrefTo(REF_CLASS_USAGE,
+                                                         self.classes[class_info],
+                                                         method_item, off)
+                                            self.classes[class_info].AddXrefFrom(
+                                                REF_CLASS_USAGE,
+                                                self.classes[current_class.get_name()],
+                                                current_method, off)
 
-                        # sget, iget, sput, iput
-                        elif 0x52 <= op_value <= 0x6d:
-                            idx_field = instruction.get_ref_kind()
-                            field_info = last_vm.get_cm_field(idx_field)
-                            field_item = last_vm.get_field_descriptor(
-                                field_info[0], field_info[2], field_info[1])
-                            if field_item:
-                                # read access to a field
-                                if (0x52 <= op_value <= 0x58) or (
-                                        0x60 <= op_value <= 0x66):
-                                    self.classes[current_class.get_name(
-                                    )].AddFXrefRead(
-                                        current_method,
-                                        self.classes[current_class.get_name()],
-                                        field_item)
-                                # write access to a field
-                                else:
-                                    self.classes[current_class.get_name(
-                                    )].AddFXrefWrite(
-                                        current_method,
-                                        self.classes[current_class.get_name()],
-                                        field_item)
+                            # const-string/jumbo vAA, string@BBBB
+                            elif 0x1a <= op_value <= 0x1b:
+                                string_value = last_vm.get_cm_string(
+                                    instruction.get_ref_kind())
+                                if string_value not in self.strings:
+                                    self.strings[string_value] = StringAnalysis(
+                                        string_value)
+                                self.strings[string_value].AddXrefFrom(
+                                    self.classes[current_class.get_name()],
+                                    current_method)
 
-                        off += instruction.get_length()
-                except dvm.InvalidInstruction as e:
-                    warning("Invalid instruction %s" % str(e))
+                            # sget, iget, sput, iput
+                            elif 0x52 <= op_value <= 0x6d:
+                                idx_field = instruction.get_ref_kind()
+                                field_info = last_vm.get_cm_field(idx_field)
+                                field_item = last_vm.get_field_descriptor(
+                                    field_info[0], field_info[2], field_info[1])
+                                if field_item:
+                                    # read access to a field
+                                    if (0x52 <= op_value <= 0x58) or (
+                                            0x60 <= op_value <= 0x66):
+                                        self.classes[current_class.get_name(
+                                        )].AddFXrefRead(
+                                            current_method,
+                                            self.classes[current_class.get_name()],
+                                            field_item)
+                                    # write access to a field
+                                    else:
+                                        self.classes[current_class.get_name(
+                                        )].AddFXrefWrite(
+                                            current_method,
+                                            self.classes[current_class.get_name()],
+                                            field_item)
+
+                            off += instruction.get_length()
+                    except dvm.InvalidInstruction as e:
+                        warning("Invalid instruction %s" % str(e))
 
     def get_method(self, method):
         for vm in self.vms:
