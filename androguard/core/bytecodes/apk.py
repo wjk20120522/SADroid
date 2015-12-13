@@ -92,27 +92,6 @@ class APK(object):
                     for item in self.xml[i].getElementsByTagName('uses-permission'):
                         self.permissions.append(str(item.getAttributeNS(NS_ANDROID_URI, 'name')))
 
-                    # getting details of the declared permissions
-                    for d_perm_item in self.xml[i].getElementsByTagName('permission'):
-                        d_perm_name = self._get_res_string_value(str(
-                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "name")))
-                        d_perm_label = self._get_res_string_value(str(
-                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "label")))
-                        d_perm_description = self._get_res_string_value(str(
-                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "description")))
-                        d_perm_permission_group = self._get_res_string_value(str(
-                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "permissionGroup")))
-                        d_perm_protection_level = self._get_res_string_value(str(
-                            d_perm_item.getAttributeNS(NS_ANDROID_URI, "protectionLevel")))
-
-                        d_perm_details = {
-                            "label": d_perm_label,
-                            "description": d_perm_description,
-                            "permissionGroup": d_perm_permission_group,
-                            "protectionLevel": d_perm_protection_level,
-                        }
-                        self.declared_permissions[d_perm_name] = d_perm_details
-
                     self.valid_apk = True
 
             elif i.find("res/layout/") != -1:   # find the onClick callback method in layout xml

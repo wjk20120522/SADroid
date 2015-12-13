@@ -721,6 +721,8 @@ class NewVmAnalysis(object):
 
     def generate_dot_edges(self):
         buff = ""
+        dots = set()
+        edges = 0
         for current_class in self.classes.keys():
             current_class_analysis = self.classes[current_class]
             for method in current_class_analysis.methods.keys():    # method -> EncodedMethod
@@ -728,9 +730,16 @@ class NewVmAnalysis(object):
                 for obj, met, off in class_method_analysis.xrefto:
                     if method.get_class_name().find("Landroid/support/") != -1 and met.get_class_name().find("Landroid/support/") != -1:
                         continue
-                    buff += '"' + (method.get_class_name() + method.get_name() + method.get_descriptor()) + '"' + ' -> '
-                    buff += '"' + (met.get_class_name() + met.get_name() + met.get_descriptor()) + '"'
+                    m1 = method.get_class_name() + method.get_name() + method.get_descriptor()
+                    m2 = met.get_class_name() + met.get_name() + met.get_descriptor()
+                    dots.add(m1)
+                    dots.add(m2)
+                    buff += '"' + m1 + '"' + ' -> '
+                    buff += '"' + m2 + '"'
                     buff += '\n'
+                    edges += 1
+        print "dots number: %d", len(dots)
+        print "edges numbers: %d", edges
         return buff
 
     def create_xref(self):
