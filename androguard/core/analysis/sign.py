@@ -85,7 +85,7 @@ class Signature(object):
         self._init_caches()
 
     def _get_method_info(self, m):
-        m1 = m.get_method()
+        m1 = m.get_method_novm()
         return '%s-%s-%s' % (m1.get_class_name(), m1.get_name(),
                              m1.get_descriptor())
 
@@ -104,7 +104,7 @@ class Signature(object):
         return l
 
     def _get_hex(self, analysis_method):
-        code = analysis_method.get_method().get_code()
+        code = analysis_method.get_method_novm().get_code()
         if code == None:
             return ''
 
@@ -201,7 +201,7 @@ class Signature(object):
     def _get_exceptions(self, analysis_method):
         buff = ''
 
-        method = analysis_method.get_method()
+        method = analysis_method.get_method_novm()
         code = method.get_code()
         if code == None or code.get_tries_size() <= 0:
             return buff
@@ -218,7 +218,7 @@ class Signature(object):
         buff = ''
 
         strings_method = \
-            self.tainted_variables.get_strings_by_method(analysis_method.get_method())
+            self.tainted_variables.get_strings_by_method(analysis_method.get_method_novm())
         for s in strings_method:
             for path in strings_method[s]:
                 buff += s.replace('\n', ' ')
@@ -228,7 +228,7 @@ class Signature(object):
         l = []
 
         strings_method = \
-            self.tainted_variables.get_strings_by_method(analysis_method.get_method())
+            self.tainted_variables.get_strings_by_method(analysis_method.get_method_novm())
         for s in strings_method:
             for path in strings_method[s]:
                 l.append((path[1], 'S%d' % len(s)))
@@ -242,7 +242,7 @@ class Signature(object):
         l = []
 
         strings_method = \
-            self.tainted_variables.get_strings_by_method(analysis_method.get_method())
+            self.tainted_variables.get_strings_by_method(analysis_method.get_method_novm())
         for s in strings_method:
             for path in strings_method[s]:
                 l.append((path[1], 'S'))
@@ -256,7 +256,7 @@ class Signature(object):
             return self._global_cached[key]
 
         fields_method = \
-            self.tainted_variables.get_fields_by_method(analysis_method.get_method())
+            self.tainted_variables.get_fields_by_method(analysis_method.get_method_novm())
         l = []
 
         for f in fields_method:
@@ -268,7 +268,7 @@ class Signature(object):
 
     def _get_packages_a(self, analysis_method):
         packages_method = \
-            self.tainted_packages.get_packages_by_method(analysis_method.get_method())
+            self.tainted_packages.get_packages_by_method(analysis_method.get_method_novm())
         l = []
 
         for m in packages_method:
@@ -288,7 +288,7 @@ class Signature(object):
             return self._global_cached[key]
 
         packages_method = \
-            self.tainted_packages.get_packages_by_method(analysis_method.get_method())
+            self.tainted_packages.get_packages_by_method(analysis_method.get_method_novm())
         if self.classes_names == None:
             self.classes_names = \
                 analysis_method.get_vm().get_classes_names()
@@ -333,7 +333,7 @@ class Signature(object):
 
     def _get_packages_pa_2(self, analysis_method, include_packages):
         packages_method = \
-            self.tainted_packages.get_packages_by_method(analysis_method.get_method())
+            self.tainted_packages.get_packages_by_method(analysis_method.get_method_novm())
 
         l = []
 

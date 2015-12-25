@@ -3091,6 +3091,11 @@ class EncodedMethod(object):
         bytecode._PrintDefault('- return: %s\n' % get_type(ret[1]))
         bytecode._PrintSubBanner()
 
+    def __str__(self):
+        return "%s->%s%s [access_flags=%s]" % (
+            self.get_class_name(), self.get_name(), self.get_descriptor(),
+            self.get_access_flags_string())
+
     def show_info(self):
         """
             Display the basic information about the method
@@ -3124,7 +3129,7 @@ class EncodedMethod(object):
             if self.CM.get_vmanalysis() is None:
                 self.code.show()
             else:
-                self.code.pretty_show(self.CM.get_vmanalysis().get_method(self))
+                self.code.pretty_show(self.CM.get_vmanalysis().get_method_novm(self))
                 self.show_xref()
 
     def show_xref(self):
@@ -8949,7 +8954,7 @@ def get_params_info(nb, proto):
 
 
 def get_bytecodes_method(dex_object, ana_object, method):
-    mx = ana_object.get_method(method)
+    mx = ana_object.get_method_novm(method)
     return get_bytecodes_methodx(method, mx)
 
 

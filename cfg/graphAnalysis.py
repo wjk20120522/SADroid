@@ -1152,7 +1152,7 @@ class CFGAnalysis(object):
         buff = ""
         for vm in self.vms:
             for method in vm.get_methods():
-                g = self.vmx.get_method(vm, method)  # g => MethodAnalysis
+                g = self.vmx.get_method_novm(vm, method)  # g => MethodAnalysis
                 # self.block_number += len(g.basic_blocks.bb)
                 for block in g.basic_blocks.get():
                     buff += '"' + block.name + '"' + '\n'
@@ -1162,7 +1162,7 @@ class CFGAnalysis(object):
         buff = ""
         for vm in self.vms:
             for method in vm.get_methods():
-                g = self.vmx.get_method(vm, method)
+                g = self.vmx.get_method_novm(vm, method)
                 for block in g.basic_blocks.get():
                     for child_block in block.childs:
                         buff += '"' + block.name + '"' + " -> " + '"' + child_block[2].get_name() + '"' + '\n'
@@ -1295,7 +1295,7 @@ class CFGAnalysis(object):
 
             if c.get_superclassname() == 'Ljava/lang/Thread;' \
                 or c.get_superclassname() == 'Ljava/util/TimerTask;':
-                for i in self.vm.get_method('run'):
+                for i in self.vm.get_method_novm('run'):
                     if i.get_class_name() == c.get_name():
                         n1 = self._get_node(i.get_class_name(),
                                 i.get_name(), i.get_descriptor())
@@ -1309,7 +1309,7 @@ class CFGAnalysis(object):
 
                         # link from init to start
 
-                        for init in self.vm.get_method('<init>'):
+                        for init in self.vm.get_method_novm('<init>'):
                             if init.get_class_name() == c.get_name():
                                 n3 = \
                                     self._get_node(init.get_class_name(),

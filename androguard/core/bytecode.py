@@ -245,11 +245,11 @@ struct_%s [label=<
     edges_html = ''
     blocks_html = ''
 
-    method = mx.get_method()
+    method = mx.get_method_novm()
     sha256 = hashlib.sha256('%s%s%s'
-                            % (mx.get_method().get_class_name(),
-                            mx.get_method().get_name(),
-                            mx.get_method().get_descriptor())).hexdigest()
+                            % (mx.get_method_novm().get_class_name(),
+                            mx.get_method_novm().get_name(),
+                            mx.get_method_novm().get_descriptor())).hexdigest()
 
     registers = {}
     if method.get_code():
@@ -545,7 +545,7 @@ def method2json_undirect(mx):
 
         cblock['BasicBlockId'] = DVMBasicMethodBlock.get_name()
         cblock['registers'] = \
-            mx.get_method().get_code().get_registers_size()
+            mx.get_method_novm().get_code().get_registers_size()
         cblock['instructions'] = []
 
         ins_idx = DVMBasicMethodBlock.start
@@ -618,7 +618,7 @@ def method2json_direct(mx):
         cblock['notes'] = DVMBasicMethodBlock.get_notes()
 
         cblock['registers'] = \
-            mx.get_method().get_code().get_registers_size()
+            mx.get_method_novm().get_code().get_registers_size()
         cblock['instructions'] = []
 
         ins_idx = DVMBasicMethodBlock.start

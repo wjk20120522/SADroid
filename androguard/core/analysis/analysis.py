@@ -856,7 +856,7 @@ class NewVmAnalysis(object):
                     except dvm.InvalidInstruction as e:
                         warning("Invalid instruction %s" % str(e))
 
-    def get_method(self, method):
+    def get_method_novm(self, method):
         for vm in self.vms:
             if method in vm.get_methods():
                 return MethodAnalysis(vm, method)
