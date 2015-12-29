@@ -10,6 +10,7 @@ from androguard.core.analysis.risk import PERMISSIONS_RISK, \
 
 from copy import deepcopy
 
+
 class Graph(object):
 
     def __init__(self):

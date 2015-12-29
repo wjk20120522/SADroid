@@ -17,15 +17,13 @@ options_io = [option_0, option_1]
 def main(options):
     if options.input is not None:
         a = apk.APK(options.input)
-        i = 0
         if a.is_valid_apk():
             vmx = None
 
             # multi-dex support
             for dex in a.get_all_dex():
                 vm = dvm.DalvikVMFormat(dex)
-                if i == 0:
-                    i += 1
+                if vmx is None:
                     vmx = analysis.NewVmAnalysis(vm)
                 else:
                     vmx.add(vm)

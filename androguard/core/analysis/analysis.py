@@ -862,6 +862,7 @@ class NewVmAnalysis(object):
                 return MethodAnalysis(vm, method)
         return None
 
+    @staticmethod
     def get_method(self, vm, method):
         return MethodAnalysis(vm, method)
 
@@ -908,6 +909,7 @@ class NewVmAnalysis(object):
 
     def get_vms(self):
         return self.vms
+
 
 def is_ascii_obfuscation(vm):
     for classe in vm.get_classes():

@@ -7860,6 +7860,10 @@ class DalvikVMFormat(bytecode._Bytecode):
                        'LAZY_ANALYSIS': CONF['LAZY_ANALYSIS']}
         self.CM = ClassManager(self, self.config)
         self._load()
+        self.classes_names = None
+        self.__cache_methods = None
+        self.__cached_methods_idx = None
+        self.__cache_fields = None
 
     def _load(self):
         self.__header = HeaderItem(self, ClassManager(None, self.config))
@@ -7875,11 +7879,6 @@ class DalvikVMFormat(bytecode._Bytecode):
             self.strings = self.map_list.get_item_type('TYPE_STRING_DATA_ITEM')
             self.debug = self.map_list.get_item_type('TYPE_DEBUG_INFO_ITEM')
             self.header = self.map_list.get_item_type('TYPE_HEADER_ITEM')
-
-        self.classes_names = None
-        self.__cache_methods = None
-        self.__cached_methods_idx = None
-        self.__cache_fields = None
 
     def get_classes_def_item(self):
         """
@@ -7966,28 +7965,6 @@ class DalvikVMFormat(bytecode._Bytecode):
 
         self.map_list.pretty_show()
 
-    @staticmethod
-    def fix_checksums(buff):
-        """
-          Fix a dex format buffer by setting all checksums
-
-          :rtype: string
-      """
-
-        import zlib
-        import hashlib
-
-        signature = hashlib.sha1(buff[0x20:]).digest()
-
-        buff = buff[:0x0c] + signature + buff[0x20:]
-        checksum = zlib.adler32(buff[0x0c:])
-        buff = buff[:8] + pack('=i', checksum) + buff[0x0c:]
-
-        debug('NEW SIGNATURE %s' % repr(signature))
-        debug('NEW CHECKSUM %x' % checksum)
-
-        return buff
-
     def get_cm_field(self, idx):
         """
           Get a specific field by using an index
@@ -8036,7 +8013,6 @@ class DalvikVMFormat(bytecode._Bytecode):
                            Maybe needed after using a MyClass.set_name().
             :rtype: a list of string
         """
-
         if self.classes_names is None or update:
             self.classes_names = [i.get_name() for i in self.classes.class_def]
         return self.classes_names
@@ -8047,12 +8023,6 @@ class DalvikVMFormat(bytecode._Bytecode):
           :rtype: a list of :class:`ClassDefItem` objects
         """
         return self.classes.class_def
-        # ret = []
-        # for i in self.classes.class_def:
-        #     if i.name.find("Landroid/support") != -1:
-        #         continue
-        #     ret.append(i)
-        # return ret
 
     def get_class(self, name):
         """
@@ -8160,7 +8130,7 @@ class DalvikVMFormat(bytecode._Bytecode):
           :rtype: None or an :class:`EncodedMethod` object
         """
 
-        if self.__cached_methods_idx == None:
+        if self.__cached_methods_idx is None:
             self.__cached_methods_idx = {}
             for i in self.classes.class_def:
                 for j in i.get_methods():
@@ -8342,7 +8312,7 @@ class DalvikVMFormat(bytecode._Bytecode):
                     xref_meth = \
                         self.get_method_descriptor(xref.class_name,
                             xref.method_name, xref.descriptor)
-                    if python_export == True:
+                    if python_export is True:
                         name = \
                             bytecode.FormatClassToPython(xref_meth.get_class_name()) \
                             + '__' \
