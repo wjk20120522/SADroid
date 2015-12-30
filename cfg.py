@@ -29,7 +29,7 @@ def main(options):
                     vmx.add(vm)
             if vmx is not None:
                 vmx.create_xref()
-                with open('graphviz.txt', 'w') as f:
+                with open('graphviz.dot', 'w') as f:
                     f.write(vmx.export_to_dot())
                 # g = graphAnalysis.CFGAnalysis(vmx, a)   # generate CF
                 # g.export_to_dot()

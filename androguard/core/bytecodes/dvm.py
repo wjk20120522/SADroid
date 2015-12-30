@@ -301,7 +301,7 @@ def writesleb128(value):
     return buff
 
 
-def determineNext(i, end, m):
+def determine_next(i, end, m):
     """
     :param i:   instruction
     :param end: idx
@@ -338,7 +338,7 @@ def determineNext(i, end, m):
     return []
 
 
-def determineException(vm, m):  # m : EncodedMethod
+def determine_exception(vm, m):  # m : EncodedMethod
 
     # no exceptions !
     if m.get_code().get_tries_size() <= 0:
@@ -8509,10 +8509,10 @@ class DalvikVMFormat(bytecode._Bytecode):
         return BRANCH_DVM_OPCODES
 
     def get_determineNext(self):
-        return determineNext
+        return determine_next
 
     def get_determineException(self):
-        return determineException
+        return determine_exception
 
     def get_DVM_TOSTRING(self):
         return DVM_TOSTRING()

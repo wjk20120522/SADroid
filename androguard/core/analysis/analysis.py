@@ -74,6 +74,15 @@ class DVMBasicBlock(object):
             idx += i.get_length()
         return tmp_ins
 
+    def get_instructions_output(self):
+        ret = ""
+        instructions = self.get_instructions()
+        for instruction in instructions:
+            if ret != "":
+                ret += '\n'
+            ret += instruction.get_output()
+        return ret
+
     def get_nb_instructions(self):
         return self.nb_instructions
 
@@ -118,7 +127,7 @@ class DVMBasicBlock(object):
     def set_childs(self, values):
 
         # print self, self.start, self.end, values
-        if values is []:
+        if not values:
             next_block = self.context.get_basic_block(self.end + 1)
             if next_block is not None:
                 self.childs.append((self.end - self.get_last_length(),
@@ -409,10 +418,10 @@ class MethodAnalysis(object):
 
         debug('Parsing instructions')
         instructions = [i for i in bc.get_instructions()]
-        for i in instructions:
+        for i in instructions:          # i : 'Instruction'
             for j in BasicOPCODES:      # branch
                 if j.match(i.get_name()) is not None:
-                    v = dvm.determineNext(i, idx, self.method)
+                    v = dvm.determine_next(i, idx, self.method)
                     h[idx] = v
                     l.extend(v)
                     break
@@ -420,7 +429,7 @@ class MethodAnalysis(object):
             idx += i.get_length()
 
         debug('Parsing exceptions')
-        excepts = dvm.determineException(self.__vm, self.method)
+        excepts = dvm.determine_exception(self.__vm, self.method)
         for i in excepts:
             l.extend([i[0]])
             for handler in i[2:]:
@@ -710,19 +719,36 @@ class NewVmAnalysis(object):
         buff += "\n}"
         return buff
 
-    # def generate_dots(self):
-    #     buff = ""
-    #     for current_class in self.classes.keys():
-    #         for current_method in self.classes[current_class].methods.keys():
-    #             buff += '"'
-    #             buff += (current_method.get_class_name() + current_method.get_name() + current_method.get_descriptor())
-    #             buff += '"\n'
-    #     return buff
-
     def generate_dot_edges(self):
         buff = ""
         dots = set()
         edges = 0
+
+        for vm in self.vms:
+            for method in vm.get_methods():     # method : EncodedMethod
+                code = method.get_code()
+                if method.get_name() != "a" or method.get_descriptor() != "(III)V":
+                    continue
+                for instruction in code.code.get_instructions():
+                    print instruction.get_output()
+
+                g = NewVmAnalysis.get_method(vm, method)
+                if g is None:
+                    return buff
+                for i in g.basic_blocks.get():
+                    instructions_begin = i.get_instructions_output()
+                    dots.add(i)
+                    for j in i.childs:
+                        instructions_end = j[2].get_instructions_output()
+                        buff += '"' + instructions_begin + '"' + ' -> '
+                        buff += '"' + instructions_end + '"'
+                        buff += '\n'
+                        edges += 1
+
+                for block in dots:
+                    buff += '"' + block.get_instructions_output() + '"' + '\n'
+
+        '''
         for current_class in self.classes.keys():
             current_class_analysis = self.classes[current_class]
             for method in current_class_analysis.methods.keys():    # method -> EncodedMethod
@@ -738,19 +764,18 @@ class NewVmAnalysis(object):
                     buff += '"' + m2 + '"'
                     buff += '\n'
                     edges += 1
+        '''
+
         print "dots number: %d", len(dots)
         print "edges numbers: %d", edges
         return buff
 
     def create_xref(self):
-        debug("Creating XREF/DREF")
-
         instances_class_name = self.classes.keys()
 
         for last_vm in self.vms:
             for current_class in last_vm.get_classes():
                 for current_method in current_class.get_methods():
-                    debug("Creating XREF for %s" % current_method)
 
                     code = current_method.get_code()
                     if code is None:
@@ -863,7 +888,7 @@ class NewVmAnalysis(object):
         return None
 
     @staticmethod
-    def get_method(self, vm, method):
+    def get_method(vm, method):
         return MethodAnalysis(vm, method)
 
     def get_method_by_name(self, class_name, method_name, method_descriptor):
