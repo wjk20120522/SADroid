@@ -26,7 +26,7 @@ class DVMBasicBlock(object):
         A simple basic block of a dalvik method
     """
 
-    def __init__(self, start, vm, method, context):
+    def __init__(self, start, vm, method, context, framework_block = None):
         self.__vm = vm          # DalvikVMFormat
         self.method = method    # EncodedMethod
         self.context = context  # BasicBlocks
@@ -42,8 +42,11 @@ class DVMBasicBlock(object):
 
         self.special_ins = {}
 
-        self.name = '%s@0x%x' % (self.method.get_class_name()+self.method.get_name() +
-                                 self.method.get_descriptor(), self.start)
+        if framework_block:
+            self.name = framework_block
+        else:
+            self.name = '%s@0x%x' % (self.method.get_class_name()+self.method.get_name() +
+                                     self.method.get_descriptor(), self.start)
 
         self.exception_analysis = None
 
@@ -68,6 +71,8 @@ class DVMBasicBlock(object):
         """
         tmp_ins = []
         idx = 0
+        if not self.method:         # for test
+            return self.name
         for i in self.method.get_instructions():
             if self.start <= idx < self.end:
                 tmp_ins.append(i)
@@ -77,6 +82,8 @@ class DVMBasicBlock(object):
     def get_instructions_output(self):
         ret = ""
         instructions = self.get_instructions()
+        if isinstance(instructions, str):
+            return instructions
         for instruction in instructions:
             if ret != "":
                 ret += '\n'
@@ -143,6 +150,9 @@ class DVMBasicBlock(object):
         for c in self.childs:
             if c[2] is not None:
                 c[2].set_fathers((c[1], c[0], self))
+
+    def set_child(self, child):
+        self.childs.append((0, 0, child))
 
     def push(self, i):
         self.nb_instructions += 1
@@ -407,6 +417,10 @@ class MethodAnalysis(object):
         if code is None:
             return
 
+        #################################################
+        # intro-procedural control flow construction
+        ################################################
+
         current_basic = DVMBasicBlock(0, self.__vm, self.method, self.basic_blocks)
         self.basic_blocks.push(current_basic)   # each element's type is DVMBasicBlock
 
@@ -480,6 +494,17 @@ class MethodAnalysis(object):
 
         del instructions
         del h, l
+
+    def method_call(self, off, method_analysis):
+        from_block = self.basic_blocks.get_basic_block(off)
+        to_block = method_analysis.basic_blocks.get_basic_block(0)
+        from_block.set_child(to_block)
+
+    def method_call_framework(self, off, class_name, method_name, method_discriptor):
+        from_block = self.basic_blocks.get_basic_block(off)
+        to_block = DVMBasicBlock(0, None, None, None, class_name + method_name + method_discriptor)
+        from_block.set_child(to_block)
+        print 'hello'
 
     def get_basic_blocks(self):
         """
@@ -708,13 +733,21 @@ class NewVmAnalysis(object):
         self.vms = [vm]
         self.classes = {}
         self.strings = {}
+        self.methods = {}
+        self.framework_classes = ["Landroid/", "Lassets/", "Lcom.android.internal.util/", "Ldalvik/", "Ljava/", "Ljavax",
+                                "Ljunit/", "Lorg/", "Lres/", "Landroid.support"]
 
         for current_class in vm.get_classes():
             self.classes[current_class.get_name()] = ClassAnalysis(current_class)
 
+    def intro_procedural_cfg(self):
+        for vm in self.vms:
+            for method in vm.get_methods():     # method : EncodedMethod
+                self.methods[method] = MethodAnalysis(vm, method)
+
     def export_to_dot(self):
         buff = "digraph CFG {\n"
-        # buff += self.generate_dots()
+
         buff += self.generate_dot_edges()
         buff += "\n}"
         return buff
@@ -726,27 +759,21 @@ class NewVmAnalysis(object):
 
         for vm in self.vms:
             for method in vm.get_methods():     # method : EncodedMethod
-                code = method.get_code()
-                if method.get_name() != "a" or method.get_descriptor() != "(III)V":
-                    continue
-                for instruction in code.code.get_instructions():
-                    print instruction.get_output()
-
-                g = NewVmAnalysis.get_method(vm, method)
-                if g is None:
-                    return buff
+                g = self.methods[method]
                 for i in g.basic_blocks.get():
                     instructions_begin = i.get_instructions_output()
-                    dots.add(i)
+                    dots.add(i.get_instructions_output())
+                    print len(i.childs)
                     for j in i.childs:
+                        dots.add(j[2].get_instructions_output())
                         instructions_end = j[2].get_instructions_output()
                         buff += '"' + instructions_begin + '"' + ' -> '
                         buff += '"' + instructions_end + '"'
                         buff += '\n'
                         edges += 1
 
-                for block in dots:
-                    buff += '"' + block.get_instructions_output() + '"' + '\n'
+            for block in dots:
+                    buff += '"' + block + '"' + '\n'
 
         '''
         for current_class in self.classes.keys():
@@ -770,17 +797,71 @@ class NewVmAnalysis(object):
         print "edges numbers: %d", edges
         return buff
 
-    def create_xref(self):
-        instances_class_name = self.classes.keys()
-
-        for last_vm in self.vms:
-            for current_class in last_vm.get_classes():
+    def explicit_icfg(self):
+        #####################################################
+        # explicit inter-procedural control flow construction
+        #####################################################
+        for vm in self.vms:
+            for current_class in vm.get_classes():
+                if current_class.name.find("Landroid/support/") != -1:
+                    continue
                 for current_method in current_class.get_methods():
-
                     code = current_method.get_code()
                     if code is None:
                         continue
+                    off = 0
+                    bc = code.get_bc()
+                    try:
+                        for instruction in bc.get_instructions():
+                            op_value = instruction.get_op_value()
+                            # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
+                            if (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
+                                print instruction.get_output()
+                                idx_meth = instruction.get_ref_kind()
+                                method_info = vm.get_cm_method(idx_meth)
 
+                                if method_info:
+                                    framework_method = False
+                                    for framework_class in self.framework_classes:
+                                        if method_info[0].find(framework_class) != -1:      # method is a Library method
+                                            framework_method = True
+                                            self.methods[current_method].method_call_framework(off, method_info[0],
+                                                                                               method_info[1],
+                                                                                               "".join(method_info[2]))
+                                            break
+                                    if not framework_method:
+                                        method_encode = vm.get_method_descriptor(method_info[0], method_info[1], ''.join(method_info[2]))
+
+                                        if not method_encode:
+                                            if op_value == 0x70 or op_value == 0x71:     # can not be this
+                                                print current_method
+                                                print instruction.get_output()
+                                                exit("can not invoke any method")
+                                            self.methods[current_method].method_call_framework(off, current_class.sname,
+                                                                                               method_info[1],
+                                                                                               "".join(method_info[2]))
+                                        else:
+                                            # need consider about polymorphism
+                                            self.methods[current_method].method_call(off, self.methods[method_encode])
+
+                            off += instruction.get_length()
+                    except dvm.InvalidInstruction as e:
+                        warning("Invalid instruction %s" % str(e))
+
+    def implicit_icfg(self):
+        pass
+
+    def create_xref(self):
+        instances_class_name = self.classes.keys()
+
+        for vm in self.vms:
+            for current_class in vm.get_classes():
+                if current_class.name.find("Landroid/support/") != -1:
+                    continue
+                for current_method in current_class.get_methods():
+                    code = current_method.get_code()
+                    if code is None:
+                        continue
                     off = 0
                     bc = code.get_bc()
                     try:
@@ -788,9 +869,8 @@ class NewVmAnalysis(object):
                             op_value = instruction.get_op_value()
                             if op_value in [0x1c, 0x22]:
                                 idx_type = instruction.get_ref_kind()
-                                type_info = last_vm.get_cm_type(idx_type)
-
-                                # Internal xref related to class manipulation
+                                type_info = vm.get_cm_type(idx_type)
+                                # Internal class manipulation
                                 if type_info in instances_class_name and type_info != current_class.get_name():
                                     # new-instance vAA, type@BBBB
                                     if op_value == 0x22:
@@ -814,11 +894,11 @@ class NewVmAnalysis(object):
                             # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
                             elif (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
                                 idx_meth = instruction.get_ref_kind()
-                                method_info = last_vm.get_cm_method(idx_meth)
+                                method_info = vm.get_cm_method(idx_meth)
                                 if method_info:
                                     class_info = method_info[0]
 
-                                    method_item = last_vm.get_method_descriptor(
+                                    method_item = vm.get_method_descriptor(
                                         method_info[0], method_info[1],
                                         ''.join(method_info[2]))
                                     if method_item:
@@ -845,7 +925,7 @@ class NewVmAnalysis(object):
 
                             # const-string/jumbo vAA, string@BBBB
                             elif 0x1a <= op_value <= 0x1b:
-                                string_value = last_vm.get_cm_string(
+                                string_value = vm.get_cm_string(
                                     instruction.get_ref_kind())
                                 if string_value not in self.strings:
                                     self.strings[string_value] = StringAnalysis(
@@ -857,8 +937,8 @@ class NewVmAnalysis(object):
                             # sget, iget, sput, iput
                             elif 0x52 <= op_value <= 0x6d:
                                 idx_field = instruction.get_ref_kind()
-                                field_info = last_vm.get_cm_field(idx_field)
-                                field_item = last_vm.get_field_descriptor(
+                                field_info = vm.get_cm_field(idx_field)
+                                field_item = vm.get_field_descriptor(
                                     field_info[0], field_info[2], field_info[1])
                                 if field_item:
                                     # read access to a field

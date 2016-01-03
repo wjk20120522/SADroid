@@ -85,7 +85,7 @@ class Session(object):
         else:
             dx.add(d)
 
-        dx.create_xref()
+        dx.explicit_icfg()
 
         return dx
 

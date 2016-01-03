@@ -28,7 +28,8 @@ def main(options):
                 else:
                     vmx.add(vm)
             if vmx is not None:
-                vmx.create_xref()
+                vmx.intro_procedural_cfg()
+                vmx.explicit_icfg()
                 with open('graphviz.dot', 'w') as f:
                     f.write(vmx.export_to_dot())
                 # g = graphAnalysis.CFGAnalysis(vmx, a)   # generate CF

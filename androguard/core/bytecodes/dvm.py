@@ -3039,7 +3039,6 @@ class EncodedMethod(object):
 
         self.code = self.CM.get_code(self.code_off)
 
-
     def get_locals(self):
         ret = self.proto.split(')')
         params = (ret[0])[1:].split()
@@ -8104,7 +8103,6 @@ class DalvikVMFormat(bytecode._Bytecode):
         """
         l = []
         # discard the methods of Android Frameworks packages
-
         for i in self.classes.class_def:
             if i.name.find("Landroid/support/") != -1:
                 continue
