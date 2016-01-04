@@ -4,3 +4,4 @@ input/*
 *.txt
 *.pyc
 *.DS_Store
+*.dot
