@@ -22,6 +22,7 @@ from androguard.core import bytecode
 from androguard.core import androconf
 from androguard.core.bytecodes.dvm_permissions import DVM_PERMISSIONS
 from androguard.util import read
+from androguard.core.resources import public
 
 import StringIO
 from struct import pack, unpack
@@ -1015,8 +1016,8 @@ class AXMLParser(object):
         res = self.sb.getString(name)
         if not res:
             attr = self.m_resourceIDs[name]
-            if attr in SYSTEM_RESOURCES['attributes']['inverse']:
-                res = 'android:'+SYSTEM_RESOURCES['attributes']['inverse'][attr]
+            if attr in public.SYSTEM_RESOURCES['attributes']['inverse']:
+                res = 'android:'+public.SYSTEM_RESOURCES['attributes']['inverse'][attr]
 
         return res
 
