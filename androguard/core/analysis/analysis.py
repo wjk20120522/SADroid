@@ -734,11 +734,30 @@ class NewVmAnalysis(object):
         self.classes = {}
         self.strings = {}
         self.methods = {}
-        self.framework_classes = ["Landroid/", "Lassets/", "Lcom.android.internal.util/", "Ldalvik/", "Ljava/", "Ljavax",
-                                "Ljunit/", "Lorg/", "Lres/", "Landroid.support"]
+        self.framework_classes = ["Landroid/", "Lassets/", "Lcom/android/internal/util/", "Ldalvik/", "Ljava/",
+                                  "Ljunit/", "Lorg/", "Lres/"]
 
         for current_class in vm.get_classes():
             self.classes[current_class.get_name()] = ClassAnalysis(current_class)
+
+    def get_class_nums(self):
+        ret = 0
+        for current_class in self.classes.keys():
+            framework_class = False
+            for framework in self.framework_classes:
+                if current_class.find(framework) != -1:
+                    framework_class = True
+                    break
+            if framework_class:
+                continue
+            ret += 1
+        return ret
+
+    def get_method_nums(self):
+        ret = 0
+        for vm in self.vms:
+            ret += len(vm.get_methods())
+        return ret
 
     def intro_procedural_cfg(self):
         for vm in self.vms:

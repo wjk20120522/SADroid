@@ -8101,10 +8101,18 @@ class DalvikVMFormat(bytecode._Bytecode):
 
           :rtype: a list of :class:`EncodedMethod` objects
         """
+        framework_classes = ["Landroid/", "Lassets/", "Lcom/android/internal/util/", "Ldalvik/", "Ljava/",
+                             "Ljunit/", "Lorg/", "Lres/"]
+
         l = []
         # discard the methods of Android Frameworks packages
         for i in self.classes.class_def:
-            if i.name.find("Landroid/support/") != -1:
+            framework = False
+            for class_name in framework_classes:
+                if i.name.find(class_name) != -1:
+                    framework = True
+                    break
+            if framework:
                 continue
             for j in i.get_methods():
                 l.append(j)
