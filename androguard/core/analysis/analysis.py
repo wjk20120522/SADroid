@@ -26,7 +26,7 @@ class DVMBasicBlock(object):
         A simple basic block of a dalvik method
     """
 
-    def __init__(self, start, vm, method, context, framework_block = None):
+    def __init__(self, start, vm, method, context, framework_block=None):
         self.__vm = vm          # DalvikVMFormat
         self.method = method    # EncodedMethod
         self.context = context  # BasicBlocks
@@ -43,7 +43,7 @@ class DVMBasicBlock(object):
         self.special_ins = {}
 
         if framework_block:
-            self.name = framework_block
+            self.name = framework_block + '0x0...'
         else:
             self.name = '%s@0x%x' % (self.method.get_class_name()+self.method.get_name() +
                                      self.method.get_descriptor(), self.start)
@@ -504,7 +504,6 @@ class MethodAnalysis(object):
         from_block = self.basic_blocks.get_basic_block(off)
         to_block = DVMBasicBlock(0, None, None, None, class_name + method_name + method_discriptor)
         from_block.set_child(to_block)
-        print 'hello'
 
     def get_basic_blocks(self):
         """
@@ -766,9 +765,31 @@ class NewVmAnalysis(object):
 
     def export_to_dot(self):
         buff = "digraph CFG {\n"
-
-        buff += self.generate_dot_edges()
+        # buff += self.generate_dot_edges()
+        buff += self.generate_dot_edges_discription()
         buff += "\n}"
+        return buff
+
+    def generate_dot_edges_discription(self):
+        buff = ""
+        dots = set()
+        edges = 0
+
+        for vm in self.vms:
+            for method in vm.get_methods():     # method : EncodedMethod
+                g = self.methods[method]
+                for i in g.basic_blocks.get():
+                    instructions_begin = i.name
+                    dots.add(instructions_begin)
+                    for j in i.childs:
+                        dots.add(j[2].name)
+                        instructions_end = j[2].name
+                        buff += '"' + instructions_begin + '"' + ' -> '
+                        buff += '"' + instructions_end + '"'
+                        buff += '\n'
+                        edges += 1
+        print "dots number: %d", len(dots)
+        print "edges numbers: %d", edges
         return buff
 
     def generate_dot_edges(self):
@@ -782,7 +803,6 @@ class NewVmAnalysis(object):
                 for i in g.basic_blocks.get():
                     instructions_begin = i.get_instructions_output()
                     dots.add(i.get_instructions_output())
-                    print len(i.childs)
                     for j in i.childs:
                         dots.add(j[2].get_instructions_output())
                         instructions_end = j[2].get_instructions_output()
@@ -791,8 +811,10 @@ class NewVmAnalysis(object):
                         buff += '\n'
                         edges += 1
 
+            '''
             for block in dots:
                     buff += '"' + block + '"' + '\n'
+            '''
 
         '''
         for current_class in self.classes.keys():
@@ -835,7 +857,7 @@ class NewVmAnalysis(object):
                             op_value = instruction.get_op_value()
                             # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
                             if (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
-                                print instruction.get_output()
+                                # print instruction.get_output()
                                 idx_meth = instruction.get_ref_kind()
                                 method_info = vm.get_cm_method(idx_meth)
 
