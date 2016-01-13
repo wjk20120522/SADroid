@@ -3570,11 +3570,13 @@ class ClassDefItem(object):
 
         self.name = None
         self.sname = None
+        self.childs_class_name = []
         self.access_flags_string = None
 
     def reload(self):
         self.name = self.__CM.get_type(self.class_idx)
         self.sname = self.__CM.get_type(self.superclass_idx)
+
         self.interfaces = self.__CM.get_type_list(self.interfaces_off)
 
         if self.class_data_off != 0:
@@ -3696,6 +3698,12 @@ class ClassDefItem(object):
             :rtype: int
         """
         return self.name
+
+    def get_child_class_name(self):
+        return self.childs_class_name
+
+    def set_childs_class_name(self, name):
+        self.childs_class_name.append(name)
 
     def get_superclassname(self):
         """
@@ -8095,28 +8103,34 @@ class DalvikVMFormat(bytecode._Bytecode):
                 l.append(j)
         return l
 
-    def get_methods(self):
+    def get_methods_with_framework_class(self):
+        l = []
+        for i in self.classes.class_def:
+            for j in i.get_methods():
+                l.append(j)
+        return l
+
+    def get_methods(self, framework_classes):
         """
           Return all method objects
 
           :rtype: a list of :class:`EncodedMethod` objects
         """
-        framework_classes = ["Landroid/", "Lassets/", "Lcom/android/internal/util/", "Ldalvik/", "Ljava/",
-                             "Ljunit/", "Lorg/", "Lres/"]
-
         l = []
         # discard the methods of Android Frameworks packages
         for i in self.classes.class_def:
-            framework = False
-            for class_name in framework_classes:
-                if i.name.find(class_name) != -1:
-                    framework = True
-                    break
-            if framework:
+            if self.framework_class(i.name,framework_classes):
                 continue
             for j in i.get_methods():
                 l.append(j)
         return l
+
+    @staticmethod
+    def framework_class(class_name, framework_classes):
+        for framework_class in framework_classes:
+            if class_name.find(framework_class) == 0:
+                return True
+        return False
 
     def get_len_methods(self):
         """
@@ -8168,7 +8182,7 @@ class DalvikVMFormat(bytecode._Bytecode):
 
         key = class_name + method_name + descriptor
 
-        if self.__cache_methods is None:
+        if not self.__cache_methods:
             self.__cache_methods = {}
             for i in self.classes.class_def:
                 for j in i.get_methods():

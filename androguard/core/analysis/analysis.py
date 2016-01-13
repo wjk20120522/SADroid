@@ -12,9 +12,8 @@
 #      http://www.apache.org/licenses/LICENSE-2.0
 
 import re, random, cPickle, collections
-
 from androguard.core.androconf import error, warning, debug, \
-    is_ascii_problem, load_api_specific_resource_module
+    is_ascii_problem, load_api_specific_resource_module, framework_classes
 from androguard.core.bytecodes import dvm
 
 from androguard.core.bytecodes.api_permissions import DVM_PERMISSIONS_BY_PERMISSION, \
@@ -138,21 +137,21 @@ class DVMBasicBlock(object):
             next_block = self.context.get_basic_block(self.end + 1)
             if next_block is not None:
                 self.childs.append((self.end - self.get_last_length(),
-                                   self.end, next_block))
+                                   self.end, next_block, 'intra'))
         else:
             for i in values:
                 if i != -1:
                     next_block = self.context.get_basic_block(i)
                     if next_block is not None:
                         self.childs.append((self.end - self.get_last_length(),
-                                            i, next_block))
+                                            i, next_block, 'intra'))
 
         for c in self.childs:
             if c[2] is not None:
-                c[2].set_fathers((c[1], c[0], self))
+                c[2].set_fathers((c[1], c[0], self, 'intra'))
 
     def set_child(self, child):
-        self.childs.append((0, 0, child))
+        self.childs.append((0, 0, child, 'inter'))
 
     def push(self, i):
         self.nb_instructions += 1
@@ -498,7 +497,8 @@ class MethodAnalysis(object):
     def method_call(self, off, method_analysis):
         from_block = self.basic_blocks.get_basic_block(off)
         to_block = method_analysis.basic_blocks.get_basic_block(0)
-        from_block.set_child(to_block)
+        if to_block:
+            from_block.set_child(to_block)
 
     def method_call_framework(self, off, class_name, method_name, method_discriptor):
         from_block = self.basic_blocks.get_basic_block(off)
@@ -733,11 +733,15 @@ class NewVmAnalysis(object):
         self.classes = {}
         self.strings = {}
         self.methods = {}
-        self.framework_classes = ["Landroid/", "Lassets/", "Lcom/android/internal/util/", "Ldalvik/", "Ljava/",
-                                  "Ljunit/", "Lorg/", "Lres/"]
+        self.framework_classes = framework_classes
 
         for current_class in vm.get_classes():
             self.classes[current_class.get_name()] = ClassAnalysis(current_class)
+
+    def non_framework_classes(self):
+        for cl in self.classes.keys():
+            if not self.framework_class(cl):
+                print cl
 
     def get_class_nums(self):
         ret = 0
@@ -758,9 +762,15 @@ class NewVmAnalysis(object):
             ret += len(vm.get_methods())
         return ret
 
+    def get_methods_nums_with_framework_class(self):
+        ret = 0
+        for vm in self.vms:
+            ret += len(vm.get_methods_with_framework_class())
+        return ret
+
     def intro_procedural_cfg(self):
         for vm in self.vms:
-            for method in vm.get_methods():     # method : EncodedMethod
+            for method in vm.get_methods(self.framework_classes):     # method : EncodedMethod
                 self.methods[method] = MethodAnalysis(vm, method)
 
     def export_to_dot(self):
@@ -776,18 +786,20 @@ class NewVmAnalysis(object):
         edges = 0
 
         for vm in self.vms:
-            for method in vm.get_methods():     # method : EncodedMethod
+            for method in vm.get_methods(self.framework_classes):     # method : EncodedMethod
                 g = self.methods[method]
                 for i in g.basic_blocks.get():
                     instructions_begin = i.name
                     dots.add(instructions_begin)
                     for j in i.childs:
-                        dots.add(j[2].name)
-                        instructions_end = j[2].name
-                        buff += '"' + instructions_begin + '"' + ' -> '
-                        buff += '"' + instructions_end + '"'
-                        buff += '\n'
-                        edges += 1
+                        if j[3] == 'inter':
+                            edges += 1
+                            dots.add(j[2].name)
+                            instructions_end = j[2].name
+                            buff += '"' + instructions_begin + '"' + ' -> '
+                            buff += '"' + instructions_end + '"'
+                            buff += '\n'
+
         print "dots number: %d", len(dots)
         print "edges numbers: %d", edges
         return buff
@@ -838,13 +850,20 @@ class NewVmAnalysis(object):
         print "edges numbers: %d", edges
         return buff
 
+    def framework_class(self, class_name):
+        for framework_class in self.framework_classes:
+            if class_name.find(framework_class) == 0:
+                return True
+        return False
+
     def explicit_icfg(self):
         #####################################################
         # explicit inter-procedural control flow construction
         #####################################################
         for vm in self.vms:
             for current_class in vm.get_classes():
-                if current_class.name.find("Landroid/support/") != -1:
+                # 如果当前类是框架类,则直接跳过
+                if self.framework_class(current_class.name):
                     continue
                 for current_method in current_class.get_methods():
                     code = current_method.get_code()
@@ -856,40 +875,66 @@ class NewVmAnalysis(object):
                         for instruction in bc.get_instructions():
                             op_value = instruction.get_op_value()
                             # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
-                            if (0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78):
+                            if(0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78) or (0x22ff <= op_value <= 0x26ff):
                                 # print instruction.get_output()
                                 idx_meth = instruction.get_ref_kind()
                                 method_info = vm.get_cm_method(idx_meth)
-
                                 if method_info:
-                                    framework_method = False
-                                    for framework_class in self.framework_classes:
-                                        if method_info[0].find(framework_class) != -1:      # method is a Library method
-                                            framework_method = True
-                                            self.methods[current_method].method_call_framework(off, method_info[0],
-                                                                                               method_info[1],
-                                                                                               "".join(method_info[2]))
-                                            break
-                                    if not framework_method:
-                                        method_encode = vm.get_method_descriptor(method_info[0], method_info[1], ''.join(method_info[2]))
-
-                                        if not method_encode:
-                                            if op_value == 0x70 or op_value == 0x71:     # can not be this
-                                                print current_method
-                                                print instruction.get_output()
-                                                exit("can not invoke any method")
-                                            self.methods[current_method].method_call_framework(off, current_class.sname,
-                                                                                               method_info[1],
-                                                                                               "".join(method_info[2]))
+                                    # 如果调用的是框架层的代码
+                                    if self.framework_class(method_info[0]):
+                                        self.methods[current_method].method_call_framework(off, method_info[0],
+                                                                                           method_info[1],
+                                                                                           "".join(method_info[2]))
+                                    else:
+                                        destinate_class = method_info[0]
+                                        destinate_method_name = method_info[1]
+                                        destinate_method_discription = ''.join(method_info[2])
+                                        # 代码中没有找到这样的调用函数
+                                        if not vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription):
+                                            while not vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription):
+                                                if self.framework_class(destinate_class):
+                                                    self.methods[current_method].method_call_framework(off, destinate_class,
+                                                                                                       destinate_method_name,
+                                                                                                       destinate_method_discription)
+                                                    break
+                                                else:
+                                                    destinate_class = vm.get_class(destinate_class).sname
+                                            # 当前的非框架类有这样的框架函数调用
+                                            if not self.framework_class(destinate_class):
+                                                self.methods[current_method].method_call_framework(destinate_class, destinate_method_name, destinate_method_discription)
                                         else:
-                                            # need consider about polymorphism
+                                            method_encode = vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription)
+                                            # 考虑多态
+                                            org = [destinate_class]
                                             self.methods[current_method].method_call(off, self.methods[method_encode])
+                                            while org:
+                                                dst = []
+                                                for c in org:
+                                                    cur_class = vm.get_class(c)
+                                                    if cur_class.childs_class_name:
+                                                        for child_class in cur_class.childs_class_name:
+                                                            method_encode = vm.get_method_descriptor(child_class, destinate_method_name, destinate_method_discription)
+                                                            if method_encode:
+                                                                self.methods[current_method].method_call(off, self.methods[method_encode])
+                                                                dst.append(child_class)
+                                                org = dst
+                                else:
+                                    print 'do not find the specific method in smali. can not be here. '
+                                    exit('Look the bugs here in explicit_icfg construction')
 
                             off += instruction.get_length()
                     except dvm.InvalidInstruction as e:
                         warning("Invalid instruction %s" % str(e))
 
-    def implicit_icfg(self):
+    def implicit_icfg(self, registration_callback):
+        self.lifecycle_icfg()
+        self.callback_icfg()
+        pass
+
+    def lifecycle_icfg(self):
+        pass
+
+    def callback_icfg(self):
         pass
 
     def create_xref(self):
@@ -1055,6 +1100,25 @@ class NewVmAnalysis(object):
 
     def get_vms(self):
         return self.vms
+
+    def construct_class_hierarchy(self):
+        for vm in self.vms:
+            for current_class in vm.get_classes():
+                if not self.framework_class(current_class.sname):
+                    parent_class = vm.get_class(current_class.sname)
+                    parent_class.set_childs_class_name(current_class.name)
+
+    def test_hierarchy(self):
+        for vm in self.vms:
+            for current_class in vm.get_classes():
+                tmp_current = current_class
+                if self.framework_class(tmp_current.name):
+                    continue
+                print tmp_current.name,
+                while tmp_current and not self.framework_class(tmp_current.name) :
+                    print '->' + tmp_current.sname,
+                    tmp_current = vm.get_class(tmp_current.sname)
+
 
 
 def is_ascii_obfuscation(vm):
