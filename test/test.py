@@ -1,39 +1,30 @@
 import sys
 
+sys.path.append('../')
 
+
+test = {}
+test['12'] = []
+test['23'] = []
+for key in test.keys():
+    if key == '12':
+        print '12 is key'
 
 exit()
-'''
-if __name__ == '__main__':
-    with open('/Users/wjk/Downloads/ImplicitEdges/ImplicitEdges.txt', 'r') as rf:
-        with open('/Users/wjk/Downloads/ImplicitEdges/ImplicitEdges2.txt', 'w') as wf:
-            for line in rf:
-                reg, callback, pos = line.split('#')
-                reg = reg.split('.')
-                len1 = len(reg)-1
-                tmp = 'L'
-                for key,r in enumerate(reg):
-                    if key != 0:
-                        if key == len1:
-                            tmp += ';->'
-                        else:
-                            tmp += '/'
-                    tmp += r
-                tmp += '#'
 
-                callback = callback.split('.')
-                for key,r in enumerate(callback):
-                    if key != 0:
-                        if key == len1:
-                            tmp += ';->'
-                        else:
-                            tmp += '/'
-                    tmp += r
-                tmp += '#'
-                tmp += str(pos)
 
-                wf.write( tmp )
-'''
+
+with open('../cfg/framework/ImplicitEdges.txt', 'r') as rf:
+        count = 0
+        for line in rf:
+            reg, click, num = line.split("#")
+            if reg.find("Landroid/view/View;->setOnClickListener") != -1 and reg.find("Landroid/view/View$OnClickListener;") != -1\
+                    and click.find("onClick") != -1:
+                print line
+                count += 1
+        print count
+exit()
+
 
 count = 0
 

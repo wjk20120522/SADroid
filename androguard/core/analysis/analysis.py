@@ -18,6 +18,7 @@ from androguard.core.bytecodes import dvm
 
 from androguard.core.bytecodes.api_permissions import DVM_PERMISSIONS_BY_PERMISSION, \
     DVM_PERMISSIONS_BY_ELEMENT
+import os
 
 
 class DVMBasicBlock(object):
@@ -42,7 +43,7 @@ class DVMBasicBlock(object):
         self.special_ins = {}
 
         if framework_block:
-            self.name = framework_block + '0x0...'
+            self.name = framework_block + '0x0000'
         else:
             self.name = '%s@0x%x' % (self.method.get_class_name()+self.method.get_name() +
                                      self.method.get_descriptor(), self.start)
@@ -411,6 +412,7 @@ class MethodAnalysis(object):
 
         self.basic_blocks = BasicBlocks()
         self.exceptions = Exceptions()
+        self.frame_blocks = BasicBlocks()
 
         code = self.method.get_code()   # code:DalvikCode
         if code is None:
@@ -497,13 +499,27 @@ class MethodAnalysis(object):
     def method_call(self, off, method_analysis):
         from_block = self.basic_blocks.get_basic_block(off)
         to_block = method_analysis.basic_blocks.get_basic_block(0)
-        if to_block:
+        if from_block and to_block:
             from_block.set_child(to_block)
 
     def method_call_framework(self, off, class_name, method_name, method_discriptor):
         from_block = self.basic_blocks.get_basic_block(off)
         to_block = DVMBasicBlock(0, None, None, None, class_name + method_name + method_discriptor)
-        from_block.set_child(to_block)
+        self.frame_blocks.bb.append(to_block)
+        if from_block and to_block:
+            from_block.set_child(to_block)
+
+    def framework_call_method(self, method_analysis, class_name, method_name, method_disciptor):
+        to_blcok = method_analysis.basic_blocks.get_basic_block(0)
+        from_block = self.get_frame_block(class_name, method_name, method_disciptor)
+        if from_block and to_block:
+            from_block.set_child(to_blcok)
+
+    def get_frame_block(self, class_name, method_name, method_discriptor):
+        sig = class_name + method_name + method_discriptor
+        for block in self.frame_blocks.bb:
+            if block.name == sig + '0x0000':
+                return block
 
     def get_basic_blocks(self):
         """
@@ -734,6 +750,14 @@ class NewVmAnalysis(object):
         self.strings = {}
         self.methods = {}
         self.framework_classes = framework_classes
+        self.framework_hierarchy_childs = {}
+        # self.framework_hierarchy_parents = {}
+
+        # self.class_hierarchy_framework = {}
+
+        t = Test()
+        t.get_class()
+        t.parse_file_in_directory()
 
         for current_class in vm.get_classes():
             self.classes[current_class.get_name()] = ClassAnalysis(current_class)
@@ -775,8 +799,8 @@ class NewVmAnalysis(object):
 
     def export_to_dot(self):
         buff = "digraph CFG {\n"
-        # buff += self.generate_dot_edges()
-        buff += self.generate_dot_edges_discription()
+        # buff += self.generate_dot_edges_discription()
+        buff += self.generate_dot_edges()
         buff += "\n}"
         return buff
 
@@ -789,17 +813,30 @@ class NewVmAnalysis(object):
             for method in vm.get_methods(self.framework_classes):     # method : EncodedMethod
                 g = self.methods[method]
                 for i in g.basic_blocks.get():
-                    instructions_begin = i.name
+                    instructions_begin = i.get_instructions_output()
                     dots.add(instructions_begin)
                     for j in i.childs:
                         if j[3] == 'inter':
                             edges += 1
-                            dots.add(j[2].name)
-                            instructions_end = j[2].name
+                            dots.add(j[2].get_instructions_output())
+                            instructions_end = j[2].get_instructions_output()
+                            buff += '"' + instructions_begin + '"' + ' -> '
+                            buff += '"' + instructions_end + '"'
+                for i in g.frame_blocks.get():
+                    instructions_begin = i.get_instructions_output()
+                    dots.add(i.get_instructions_output())
+                    for j in i.childs:
+                        if j[3] == 'inter':
+                            dots.add(j[2].get_instructions_output())
+                            instructions_end = j[2].get_instructions_output()
                             buff += '"' + instructions_begin + '"' + ' -> '
                             buff += '"' + instructions_end + '"'
                             buff += '\n'
+                            edges += 1
 
+        for dot in dots:
+            buff += '"' + dot + '"'
+        buff += '\n'
         print "dots number: %d", len(dots)
         print "edges numbers: %d", edges
         return buff
@@ -810,18 +847,29 @@ class NewVmAnalysis(object):
         edges = 0
 
         for vm in self.vms:
-            for method in vm.get_methods():     # method : EncodedMethod
+            for method in vm.get_methods(self.framework_classes):     # method : EncodedMethod
                 g = self.methods[method]
                 for i in g.basic_blocks.get():
-                    instructions_begin = i.get_instructions_output()
-                    dots.add(i.get_instructions_output())
+                    instructions_begin = i.name
+                    dots.add(i.name)
                     for j in i.childs:
-                        dots.add(j[2].get_instructions_output())
-                        instructions_end = j[2].get_instructions_output()
-                        buff += '"' + instructions_begin + '"' + ' -> '
-                        buff += '"' + instructions_end + '"'
-                        buff += '\n'
-                        edges += 1
+                        if j[3] == 'inter':
+                            dots.add(j[2].name)
+                            instructions_end = j[2].name
+                            buff += '"' + instructions_begin + '"' + ' -> '
+                            buff += '"' + instructions_end + '"'
+                            edges += 1
+                for i in g.frame_blocks.get():
+                    instructions_begin = i.name
+                    dots.add(i.name)
+                    for j in i.childs:
+                        if j[3] == 'inter':
+                            dots.add(j[2].name)
+                            instructions_end = j[2].name
+                            buff += '"' + instructions_begin + '"' + ' -> '
+                            buff += '"' + instructions_end + '"'
+                            buff += '\n'
+                            edges += 1
 
             '''
             for block in dots:
@@ -898,10 +946,15 @@ class NewVmAnalysis(object):
                                                                                                        destinate_method_discription)
                                                     break
                                                 else:
-                                                    destinate_class = vm.get_class(destinate_class).sname
+                                                    try:
+                                                        destinate_class = vm.get_class(destinate_class).sname
+                                                    except:
+                                                        # print destinate_class
+                                                        break
+
                                             # 当前的非框架类有这样的框架函数调用
                                             if not self.framework_class(destinate_class):
-                                                self.methods[current_method].method_call_framework(destinate_class, destinate_method_name, destinate_method_discription)
+                                                self.methods[current_method].method_call_framework(off, destinate_class, destinate_method_name, destinate_method_discription)
                                         else:
                                             method_encode = vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription)
                                             # 考虑多态
@@ -919,8 +972,9 @@ class NewVmAnalysis(object):
                                                                 dst.append(child_class)
                                                 org = dst
                                 else:
-                                    print 'do not find the specific method in smali. can not be here. '
-                                    exit('Look the bugs here in explicit_icfg construction')
+                                    pass
+                                    # print 'do not find the specific method in smali. can not be here. '
+                                    # exit('Look the bugs here in explicit_icfg construction')
 
                             off += instruction.get_length()
                     except dvm.InvalidInstruction as e:
@@ -928,14 +982,149 @@ class NewVmAnalysis(object):
 
     def implicit_icfg(self, registration_callback):
         self.lifecycle_icfg()
-        self.callback_icfg()
+        self.callback_icfg(registration_callback)
         pass
 
     def lifecycle_icfg(self):
+        for vm in self.vms:
+            for current_class in vm.get_classes():      # current_class : ClassDefItem
+                if self.framework_class(current_class.name):
+                    continue
+                if self.activity_class(current_class.name, vm):
+                    self.activity_lifecycle(current_class, vm)
+                elif self.service_class(current_class.name, vm):
+                    self.service_lifecycle(current_class, vm)
+                elif self.broadcast_receiver_class(current_class.name, vm):
+                    self.broadcast_receiver_lifecycle(current_class, vm)
+                elif self.content_provider_class(current_class.name, vm):
+                    self.content_provider_lifecycle(current_class, vm)
+
+    def callback_icfg(self, registration_callback):
+        for vm in self.vms:
+            for current_class in vm.get_classes():
+                if self.framework_class(current_class.name):
+                    continue
+                for current_method in current_class.get_methods():
+                    code = current_method.get_code()
+                    if code is None:
+                        continue
+                    off = 0
+                    bc = code.get_bc()
+                    try:
+                        for instruction in bc.get_instructions():
+                            op_value = instruction.get_op_value()
+                            # invoke-kind /range {vC, vD, vE, vF, vG}, meth@BBBB
+                            if(0x6e <= op_value <= 0x72) or (0x74 <= op_value <= 0x78) or (0x22ff <= op_value <= 0x26ff):
+                                idx_meth = instruction.get_ref_kind()
+                                method_info = vm.get_cm_method(idx_meth)
+                                if method_info:
+                                    from_class = method_info[0]
+                                    from_method_name = method_info[1]
+                                    from_method_discription = ''.join(method_info[2])
+
+                                    while (from_class + '->' + from_method_name + from_method_discription) not in registration_callback.keys():
+                                        if self.framework_class(from_class) and from_class.find("Landroid/support") == -1:
+                                            try:
+                                                from_class = class_hierarchy_framework[from_class[:-1] + '.java']['parents'][0]
+                                                from_class = from_class[:-5] + ';'
+                                            except:
+                                                break
+                                        else:
+                                            try:
+                                                from_class = vm.get_class(from_class).sname
+                                            except:
+                                                break
+
+                                    signture = from_class + '->'+ from_method_name + from_method_discription
+                                    # 如果存在这样的registration函数
+                                    if signture in registration_callback.keys():
+                                        reg = registration_callback[signture]
+                                        for position in reg.keys():
+                                            may_callback = reg[position]
+                                            p1 = may_callback.find("->")
+                                            p2 = may_callback.find("(")
+                                            may_func = may_callback[p1+2:p2]
+
+                                            if position == "0":
+                                                # 当前类中存在着对应的回调函数
+                                                method_encode = vm.get_method_descriptor(current_class.name, may_func, may_callback[p2:])
+                                                if method_encode:
+                                                    try:
+                                                        self.methods[current_method].framework_call_method(self.methods[method_encode], method_info[0], method_info[1], ''.join(method_info[2]),)
+                                                    except:
+                                                        pass
+                                                        # print method_info[0] + method_info[1] + ''.join(method_info[2])
+                                            else:
+                                                may_class = 'L' + may_callback[:p1]
+                                                # print may_class
+                                                if may_class in self.framework_hierarchy_childs.keys():
+                                                    childs = self.framework_hierarchy_childs[may_class]
+                                                    if childs:
+                                                        dst = []
+                                                        for child in childs:
+                                                            method_encode = vm.get_method_descriptor(child, may_func, may_callback[p2:])
+                                                            if method_encode:
+                                                                try:
+                                                                    self.methods[current_method].framework_call_method(self.methods[method_encode], method_info[0], method_info[1], ''.join(method_info[2]))
+                                                                except:
+                                                                    pass
+                                                            else:
+                                                                if child in self.framework_hierarchy_childs.keys():
+                                                                    dst.append(child)
+                                                        # childs = dst
+
+                            off += instruction.get_length()
+                    except dvm.InvalidInstruction as e:
+                        warning("Invalid instruction %s" % str(e))
+
+    def activity_lifecycle(self, current_class, vm):
         pass
 
-    def callback_icfg(self):
+    def service_lifecycle(self, current_class, vm):
         pass
+
+    def broadcast_receiver_lifecycle(self, current_class, vm):
+        pass
+
+    def content_provider_lifecycle(self, current_class, vm):
+        pass
+
+    def activity_class(self, class_name, vm):
+        return self.ancestor_class(class_name, "Landroid/app/Activity", vm)
+
+    def service_class(self, class_name, vm):
+        return self.ancestor_class(class_name, "Landroid.app.Service", vm)
+
+    def broadcast_receiver_class(self, class_name, vm):
+        return self.ancestor_class(class_name, "Landroid/content/BroadcastReceiver", vm)
+
+    def content_provider_class(self, class_name, vm):
+        return self.ancestor_class(class_name, "Landroid.content.ContentProvider", vm)
+
+    def application_class(self, class_name, vm):
+        return self.ancestor_class(class_name, "android.app.Application", vm)
+
+    def ancestor_class(self, class_name, ancestor_name, vm):
+        while class_name != ancestor_name:
+            if self.framework_class(class_name):
+                if class_name.find("Landroid/support") != -1:
+                    if vm.get_class(class_name):
+                        class_name = vm.get_class(class_name).sname
+                    else:
+                        return False
+                else:
+                    return False
+            else:
+                if vm.get_class(class_name):
+                    class_name = vm.get_class(class_name).sname
+                else:
+                    return False
+        return True
+
+    # def find_corresponding_framework_class(self, class_name, vm):
+    #     while not self.framework_class(class_name) or class_name.find("Landroid/support") != -1:
+    #         class_name = vm.get_class(class_name).sname
+    #     return class_name
 
     def create_xref(self):
         instances_class_name = self.classes.keys()
@@ -1104,9 +1293,21 @@ class NewVmAnalysis(object):
     def construct_class_hierarchy(self):
         for vm in self.vms:
             for current_class in vm.get_classes():
-                if not self.framework_class(current_class.sname):
-                    parent_class = vm.get_class(current_class.sname)
+                parent_class = vm.get_class(current_class.sname)
+                if parent_class:
                     parent_class.set_childs_class_name(current_class.name)
+                else:
+                    if current_class.sname in self.framework_hierarchy_childs.keys():
+                        self.framework_hierarchy_childs[current_class.sname].append(current_class.name)
+                    else:
+                        self.framework_hierarchy_childs[current_class.sname] = []
+                parent_interfaces = current_class.interfaces
+                if parent_interfaces:
+                    for pi in parent_interfaces:
+                        if pi in self.framework_hierarchy_childs.keys():
+                            self.framework_hierarchy_childs[pi].append(current_class.name)
+                        else:
+                            self.framework_hierarchy_childs[pi] = []
 
     def test_hierarchy(self):
         for vm in self.vms:
@@ -1117,6 +1318,9 @@ class NewVmAnalysis(object):
                 print tmp_current.name,
                 while tmp_current and not self.framework_class(tmp_current.name) :
                     print '->' + tmp_current.sname,
+                    if tmp_current.interfaces:
+                        for interface in tmp_current.interfaces:
+                            print '->' + interface,
                     tmp_current = vm.get_class(tmp_current.sname)
 
 
@@ -1129,3 +1333,86 @@ def is_ascii_obfuscation(vm):
             if is_ascii_problem(method.get_name()):
                 return True
     return False
+
+
+class_hierarchy_framework = {}
+
+class Test:
+    def __init__(self):
+        self.count = 0
+
+    def parse_file_in_directory(self):
+        org = [input_directory]
+        while org:
+            dst = []
+            for diretory in org:
+                for root, dirs, files in os.walk(diretory):
+                    for fi in files:
+                        if fi and fi.endswith(".java"):
+                            with open(root + os.sep + fi, 'r') as rf:
+
+                                for line in rf:
+                                    if line.find("extends") != -1:
+                                        if line.find("*") == -1:
+                                            self.link_two(line)
+                                            break
+                    for di in dirs:
+                        dst.append(di)
+            org = dst
+
+    @staticmethod
+    def link_two(line):
+        words = line.split(" ")
+        source = ''
+        dest = ''
+        for key in xrange(len(words)):
+            word = words[key]
+            if word == 'extends':
+                source = words[key-1]
+                dest = words[key+1]
+                break
+        # print source
+        # print dest
+        if source != '' and dest != '':
+            source_class = ''
+            dest_class = ''
+            for key in class_hierarchy_framework.keys():
+                if key.find('/' + source + '.java') != -1:
+                    source_class = key
+                if key.find('/' + dest + '.java') != -1:
+                    dest_class = key
+            # print source_class
+            # print dest_class
+            if source_class != '' and dest_class != '':
+                if 'parents' not in class_hierarchy_framework[source_class].keys():
+                    class_hierarchy_framework[source_class]['parents'] = [dest_class]
+                else:
+                    class_hierarchy_framework[source_class]['parents'].append(dest_class)
+
+                if 'childs' not in class_hierarchy_framework[dest_class].keys():
+                    class_hierarchy_framework[dest_class]['childs'] = [source_class]
+                else:
+                    class_hierarchy_framework[dest_class]['childs'].append(source_class)
+        else:
+            # print 'do not get the source and dest'
+            pass
+
+    @staticmethod
+    def get_class():
+        org = [input_directory]
+        while org:
+            dst = []
+            for directory in org:
+                for root, dirs, files in os.walk(directory):
+                    for fi in files:
+                        if fi and fi.endswith(".java"):
+                            pwd = root + os.sep + fi
+                            idx = pwd.find("class_hierarchy")
+                            cl = 'L' + pwd[idx + 16:]
+                            class_hierarchy_framework[cl] = {}
+                    for di in dirs:
+                        dst.append(di)
+            org = dst
+
+input_directory = "/Users/wjk/Documents/class_hierarchy/"
+

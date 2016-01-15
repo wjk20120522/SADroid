@@ -3705,6 +3705,8 @@ class ClassDefItem(object):
     def set_childs_class_name(self, name):
         self.childs_class_name.append(name)
 
+
+
     def get_superclassname(self):
         """
             Return the name of the super class
