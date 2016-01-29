@@ -1,42 +1,20 @@
 #!/usr/bin/env python
 # -*- coding:utf-8  -*-
 
-import sys
-import string
-from reportlab.graphics.shapes import Drawing, String
-from reportlab.graphics import renderPDF
+import socket
 
-import fileinput
+s = socket.socket()
 
-for line in fileinput.input(inplace=True):
-    line = line.rstrip()
-    num = fileinput.lineno()
-    print '%-75s # %2i' %(line, num)
-exit()
+host = socket.gethostname()
 
-def conflict(state, nextX):
-    nextY = len(state)
-    for i in range(nextY):
-        if abs(nextX-state[i]) in (0, nextY-i):
-            return True
-    return False
+port = 1234
 
-def queens(num=8, state=()):
-    for pos in range(num):
-        if not conflict(state, pos):
-            if len(state) == num-1:
-                yield (pos, )
-            else:
-                for result in queens(num, state + (pos,)):
-                    yield (pos,) + result
+s.bind((host,port))
+s.listen(5)
+while True:
+    c, addr = s.accept()
+    print 'Got connection from ', addr
+    c.send("Thank you for connecting")
+    c.close()
 
 
-print len(list(queens(16)))
-
-exit()
-
-d = Drawing(100, 100)
-s = String(50, 50, 'Hello, world!dddddddddddddsad./t', textAnchor='middle')
-
-d.add(s)
-renderPDF.drawToFile(d, 'hello.pdf', 'A simple PDF file')
