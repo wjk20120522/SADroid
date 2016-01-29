@@ -15,7 +15,6 @@ options_io = [option_0]
 
 registration_callback = {}
 
-
 def get_registration_callback():
     with open('cfg/framework/ImplicitEdges.txt', 'r') as rf:
         for line in rf:
@@ -27,7 +26,7 @@ def get_registration_callback():
 
 
 def one_apk_file_analysis(base_path):
-    if os.path.isfile(base_path[:-3] + 'txt'):
+    if os.path.isfile(base_path[:-3] + 'dot'):
         return
     if not base_path:
         useage()
@@ -47,7 +46,7 @@ def one_apk_file_analysis(base_path):
             vmx.intro_procedural_cfg()
             vmx.explicit_icfg()
             # vmx.implicit_icfg(registration_callback)
-            with open(base_path[:-3] + 'txt', 'w') as f:
+            with open(base_path[:-3] + 'dot', 'w') as f:
                 f.write(vmx.export_to_dot())
         end = clock()
         print 'Analyzing the file ' + base_path + ' cost : ' + str(end-start) + "s"
@@ -87,8 +86,8 @@ if __name__ == '__main__':
     # get_registration_callback()
 
     # change if you want to analysis one apk or lots of apks
-    # many_apk_file_analysis(option_input_output.input)
-    one_apk_file_analysis(option_input_output.input)
+    many_apk_file_analysis(option_input_output.input)
+    # one_apk_file_analysis(option_input_output.input)
     time_end = clock()
     print 'all the time cost is : ' + str(time_end-time_begin) + 's'
 
