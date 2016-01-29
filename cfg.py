@@ -43,10 +43,10 @@ def one_apk_file_analysis(base_path):
             else:
                 vmx.add(vm)
         if vmx is not None:
-            vmx.construct_class_hierarchy()
+            # vmx.construct_class_hierarchy()
             vmx.intro_procedural_cfg()
             vmx.explicit_icfg()
-            vmx.implicit_icfg(registration_callback)
+            # vmx.implicit_icfg(registration_callback)
             with open(base_path[:-3] + 'txt', 'w') as f:
                 f.write(vmx.export_to_dot())
         end = clock()
@@ -84,11 +84,11 @@ if __name__ == '__main__':
         parser.add_option(*param, **option)
 
     (option_input_output, _) = parser.parse_args()
-    get_registration_callback()
+    # get_registration_callback()
 
     # change if you want to analysis one apk or lots of apks
-    many_apk_file_analysis(option_input_output.input)
-    # one_apk_file_analysis(option_input_output.input)
+    # many_apk_file_analysis(option_input_output.input)
+    one_apk_file_analysis(option_input_output.input)
     time_end = clock()
     print 'all the time cost is : ' + str(time_end-time_begin) + 's'
 

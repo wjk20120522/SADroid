@@ -154,6 +154,9 @@ class DVMBasicBlock(object):
     def set_child(self, child):
         self.childs.append((0, 0, child, 'inter'))
 
+    def set_child_tmp(self, child):
+        self.childs.append((0, 0, child, 'callback'))
+
     def push(self, i):
         self.nb_instructions += 1
         idx = self.end
@@ -515,6 +518,13 @@ class MethodAnalysis(object):
         if from_block and to_block:
             from_block.set_child(to_blcok)
 
+    def framework_call_method_tmp(self, method_analysis, class_name, method_name, method_disciptor):
+        to_blcok = method_analysis.basic_blocks.get_basic_block(0)
+        from_block = self.get_frame_block(class_name, method_name, method_disciptor)
+        if from_block and to_block:
+            from_block.set_child_tmp(to_blcok)
+
+
     def get_frame_block(self, class_name, method_name, method_discriptor):
         sig = class_name + method_name + method_discriptor
         for block in self.frame_blocks.bb:
@@ -755,9 +765,9 @@ class NewVmAnalysis(object):
 
         # self.class_hierarchy_framework = {}
 
-        t = Test()
-        t.get_class()
-        t.parse_file_in_directory()
+        # t = Test()
+        # t.get_class()
+        # t.parse_file_in_directory()
 
         for current_class in vm.get_classes():
             self.classes[current_class.get_name()] = ClassAnalysis(current_class)
@@ -822,6 +832,8 @@ class NewVmAnalysis(object):
                             instructions_end = j[2].get_instructions_output()
                             buff += '"' + instructions_begin + '"' + ' -> '
                             buff += '"' + instructions_end + '"'
+                            buff += '\n'
+                            edges += 1
                 for i in g.frame_blocks.get():
                     instructions_begin = i.get_instructions_output()
                     dots.add(i.get_instructions_output())
@@ -835,8 +847,7 @@ class NewVmAnalysis(object):
                             edges += 1
 
         for dot in dots:
-            buff += '"' + dot + '"'
-        buff += '\n'
+            buff += '"' + dot + '"' + '\n'
         print "dots number: %d", len(dots)
         print "edges numbers: %d", edges
         return buff
@@ -853,28 +864,26 @@ class NewVmAnalysis(object):
                     instructions_begin = i.name
                     dots.add(i.name)
                     for j in i.childs:
-                        if j[3] == 'inter':
-                            dots.add(j[2].name)
-                            instructions_end = j[2].name
-                            buff += '"' + instructions_begin + '"' + ' -> '
-                            buff += '"' + instructions_end + '"'
-                            edges += 1
+                        dots.add(j[2].name)
+                        instructions_end = j[2].name
+                        buff += '"' + instructions_begin + '"' + ' -> '
+                        buff += '"' + instructions_end + '"'
+                        buff += '\n'
+                        edges += 1
                 for i in g.frame_blocks.get():
                     instructions_begin = i.name
                     dots.add(i.name)
                     for j in i.childs:
-                        if j[3] == 'inter':
-                            dots.add(j[2].name)
-                            instructions_end = j[2].name
-                            buff += '"' + instructions_begin + '"' + ' -> '
-                            buff += '"' + instructions_end + '"'
-                            buff += '\n'
-                            edges += 1
+                        dots.add(j[2].name)
+                        instructions_end = j[2].name
+                        buff += '"' + instructions_begin + '"' + ' -> '
+                        buff += '"' + instructions_end + '"'
+                        buff += '\n'
+                        edges += 1
 
-            '''
             for block in dots:
                     buff += '"' + block + '"' + '\n'
-            '''
+
 
         '''
         for current_class in self.classes.keys():
@@ -928,17 +937,22 @@ class NewVmAnalysis(object):
                                 idx_meth = instruction.get_ref_kind()
                                 method_info = vm.get_cm_method(idx_meth)
                                 if method_info:
+
                                     # 如果调用的是框架层的代码
                                     if self.framework_class(method_info[0]):
+
                                         self.methods[current_method].method_call_framework(off, method_info[0],
                                                                                            method_info[1],
                                                                                            "".join(method_info[2]))
+
+
                                     else:
                                         destinate_class = method_info[0]
                                         destinate_method_name = method_info[1]
                                         destinate_method_discription = ''.join(method_info[2])
                                         # 代码中没有找到这样的调用函数
                                         if not vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription):
+                                            continue
                                             while not vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription):
                                                 if self.framework_class(destinate_class):
                                                     self.methods[current_method].method_call_framework(off, destinate_class,
@@ -958,6 +972,8 @@ class NewVmAnalysis(object):
                                         else:
                                             method_encode = vm.get_method_descriptor(destinate_class, destinate_method_name, destinate_method_discription)
                                             # 考虑多态
+                                            self.methods[current_method].method_call(off, self.methods[method_encode])
+
                                             org = [destinate_class]
                                             self.methods[current_method].method_call(off, self.methods[method_encode])
                                             while org:
@@ -971,6 +987,7 @@ class NewVmAnalysis(object):
                                                                 self.methods[current_method].method_call(off, self.methods[method_encode])
                                                                 dst.append(child_class)
                                                 org = dst
+
                                 else:
                                     pass
                                     # print 'do not find the specific method in smali. can not be here. '
@@ -1050,7 +1067,7 @@ class NewVmAnalysis(object):
                                                 method_encode = vm.get_method_descriptor(current_class.name, may_func, may_callback[p2:])
                                                 if method_encode:
                                                     try:
-                                                        self.methods[current_method].framework_call_method(self.methods[method_encode], method_info[0], method_info[1], ''.join(method_info[2]),)
+                                                        self.methods[current_method].framework_call_method_tmp(self.methods[method_encode], method_info[0], method_info[1], ''.join(method_info[2]),)
                                                     except:
                                                         pass
                                                         # print method_info[0] + method_info[1] + ''.join(method_info[2])
@@ -1065,7 +1082,7 @@ class NewVmAnalysis(object):
                                                             method_encode = vm.get_method_descriptor(child, may_func, may_callback[p2:])
                                                             if method_encode:
                                                                 try:
-                                                                    self.methods[current_method].framework_call_method(self.methods[method_encode], method_info[0], method_info[1], ''.join(method_info[2]))
+                                                                    self.methods[current_method].framework_call_method_tmp(self.methods[method_encode], method_info[0], method_info[1], ''.join(method_info[2]))
                                                                 except:
                                                                     pass
                                                             else:
@@ -1336,6 +1353,7 @@ def is_ascii_obfuscation(vm):
 
 
 class_hierarchy_framework = {}
+
 
 class Test:
     def __init__(self):
